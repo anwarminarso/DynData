@@ -1,0 +1,3 @@
+﻿#Execute this command 
+
+Scaffold-DbContext "Server=.\SQL2017;Database=AdventureWorks;User ID=sa;Password=12345;" Microsoft.EntityFrameworkCore.SqlServer -Force
