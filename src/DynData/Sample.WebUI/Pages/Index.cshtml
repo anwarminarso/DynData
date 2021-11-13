@@ -61,6 +61,7 @@
 <script type="text/javascript" src="~/lib/a2n/a2n.js" asp-append-version="true"></script>
 <script type="text/javascript" src="~/lib/a2n/a2n-DynData.js" asp-append-version="true"></script>
 <script type="text/javascript" src="~/lib/jquery-querybuilder/js/query-builder.standalone.min.js"></script>
+<script type="text/javascript" src="~/lib/bootstrap/bootstrap-datepicker.js" asp-append-version="true"></script>
 
 <script type="text/javascript">
     var currentTable = null;
@@ -108,7 +109,6 @@
             dt.Render();
         });
         $('#btnAdvancedFilterApply').click(function() {
-            $('#qbContainer').queryBuilder('getRules');
             a2n.dyndata.Utils.dataTableInstances[currentTable].qbRuleSet = $('#qbContainer').queryBuilder('getRules');
             a2n.dyndata.Utils.dataTableInstances[currentTable].dt.ajax.reload();
             $('#mdlAdvancedFilter').modal('hide');

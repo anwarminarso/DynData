@@ -126,8 +126,10 @@ namespace a2n.DynData
                 }
                 else if (pt == typeof(DateTime) || pt == typeof(DateTime?))
                 {
+                    //
                     dicValues["type"] = "datetime";
                     dicValues["input"] = "text";
+                    //dicValues["input"] = "datetime-local";
                     //dicValues["validation"] = new { format = "YYYY/MM/DD" };
                     //dicValues["plugin"] = "datepicker";
                     //dicValues["plugin_config"] = new

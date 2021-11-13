@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace a2n.DynData
 {
-    public abstract class BaseDbContext : DbContext
+    public abstract class DynDbContext : DbContext
     {
         private static object lockObj = new object();
 
@@ -20,19 +20,19 @@ namespace a2n.DynData
         public DatabaseServer DBSetting { get; set; }
         public ServerVersion MySqlVersion { get; set; }
 
-        public BaseDbContext()
+        public DynDbContext()
         {
         }
-        public BaseDbContext(DatabaseServer DBSetting)
+        public DynDbContext(DatabaseServer DBSetting)
         {
             this.DBSetting = DBSetting;
         }
-        protected BaseDbContext(DbContextOptions options)
+        protected DynDbContext(DbContextOptions options)
             : base(options)
         {
         }
 
-        static BaseDbContext()
+        static DynDbContext()
         {
             dicTables = new Dictionary<Type, Dictionary<string, Type>>();
             dicMetadata = new Dictionary<Type, Dictionary<string, Metadata[]>>();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Sample.DataAccess
 {
-    public partial class AdventureWorksContext : BaseDbContext
+    public partial class AdventureWorksContext : DynDbContext
     {
         public AdventureWorksContext()
         {

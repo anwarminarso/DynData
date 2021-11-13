@@ -48,7 +48,7 @@ namespace Sample.WebUI
                     if (valueType != null)
                     {
                         propArr = db.GetProperties(viewName);
-                        var pkNames = db.GetPKNames(valueType);
+                        //var pkNames = db.GetPKNames(valueType);
                         qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
                     }
                 }
@@ -94,6 +94,14 @@ namespace Sample.WebUI
             });
         }
 
+
+        //[Route("/api/dyndata/{viewName}/list")]
+        //[HttpPost]
+        //public Task<PagingResult> GetList(string viewName)
+        //{
+
+        //}
+
         [Route("/api/dyndata/{viewName}/metadata")]
         [HttpPost]
         [HttpGet]
@@ -131,7 +139,6 @@ namespace Sample.WebUI
                 tableType = db.GetTableType(viewName);
                 if (tableType != null)
                 {
-                    var piArr = db.GetProperties(viewName);
                     results = db.GetMetadata(viewName);
                 }
                 else

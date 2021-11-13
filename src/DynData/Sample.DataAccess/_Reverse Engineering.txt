@@ -1,0 +1,9 @@
+﻿#Before execute this command view Visual Studio Package Manager Console
+#Set this project as Startup project (In solution explorer)
+#Set this project as default project (in package manager console)
+#Compile first (for make sure there is no compilation error)
+#Execute this command on package manager console 
+#Don`t forget to change connection string
+#WARNING: ALL FILE on this root project will be replace with autogerated files
+
+Scaffold-DbContext "Server=.\SQL2017;Database=AdventureWorks;User ID=sa;Password=12345;" Microsoft.EntityFrameworkCore.SqlServer -Force

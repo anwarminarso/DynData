@@ -52,13 +52,7 @@ namespace a2n.DynData
             {
                 var piArr = dicQueryList[QueryName].GetProperties(db);
                 results = (from t in piArr
-                           select new Metadata()
-                           {
-                               FieldName = t.Name,
-                               FieldType = t.PropertyType.Name,
-                               FieldLabel = t.Name,
-                               CustomAttributes = null
-                           }).ToArray();
+                           select new Metadata(t)).ToArray();
             }
             return results;
         }
