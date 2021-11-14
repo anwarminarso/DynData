@@ -12,16 +12,28 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
 }
 
-@section SideBar {
+@*@section SideBar {
     <ul class="list-group" id="tblLst">
         @foreach (var item in this.Model.AllTables)
         {
             <li class="list-group-item"><a href="#">@item</a></li>
         }
     </ul>
-}
+}*@
 @Html.AntiForgeryToken()
 <div class="row">
+    <div class="col-12">
+        <div class="form-group">
+            <label for="ddTableAndView" class="form-label">Table or View</label>
+            <select id="ddTableAndView" class="form-control">
+                <option value="">-- Select Table or View</option>
+                @foreach (var item in this.Model.AllTables)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        </div>
+    </div>
     <div class="col-12">
         <div id="tblContainer"></div>
     </div>
@@ -68,15 +80,20 @@
     var currentQB = null;
     $(function() {
         let $el = $('#tblContainer');
-        $("#tblLst a").click(function() {
+
+        $('#ddTableAndView').change(function() {
             if (currentTable && a2n.dyndata.Utils.dataTableInstances[currentTable].instance){
                 a2n.dyndata.Utils.dataTableInstances[currentTable].instance.Destroy();
             }
             if (currentQB) {
                 $('#qbContainer').queryBuilder("destroy");
             }
-            currentTable = $(this).html();
             currentQB = null;
+            currentTable = null;
+            let val = $(this).val();
+            if (!val)
+                return;
+            currentTable = val;
             let dt = new a2n.dyndata.DataTable(currentTable, $el, currentTable, { 
                 tableOptions: 
                 { 
@@ -108,6 +125,46 @@
             });
             dt.Render();
         });
+        //$("#tblLst a").click(function() {
+        //    if (currentTable && a2n.dyndata.Utils.dataTableInstances[currentTable].instance){
+        //        a2n.dyndata.Utils.dataTableInstances[currentTable].instance.Destroy();
+        //    }
+        //    if (currentQB) {
+        //        $('#qbContainer').queryBuilder("destroy");
+        //    }
+        //    currentTable = $(this).html();
+        //    currentQB = null;
+        //    let dt = new a2n.dyndata.DataTable(currentTable, $el, currentTable, { 
+        //        tableOptions: 
+        //        { 
+        //            responsive: true,
+        //            buttons: [
+        //                {
+        //                    text: '<i class=""fal fa-sync mr-1""></i>Advanced Search',
+        //                    className: 'btn btn-success btn-sm',
+        //                    action: function (e, dt, node, config) {
+        //                        let obj = a2n.dyndata.Utils.dataTableInstances[currentTable];
+        //                        if (!currentQB){
+        //                            let opt =  obj.instance.options.queryBuilderOptions;
+        //                            currentQB = $('#qbContainer').queryBuilder(opt);
+        //                        }
+        //                        if (obj.qbRuleSet)
+        //                            $('#qbContainer').queryBuilder('setRules', obj.qbRuleSet);
+                                
+        //                       $('#mdlAdvancedFilter').modal('show');
+        //                    }
+        //                }, {
+        //                    text: '<i class=""fal fa-sync mr-1""></i>Reload',
+        //                    className: 'btn btn-info btn-sm',
+        //                    action: function (e, dt, node, config) {
+        //                        dt.ajax.reload();
+        //                    }
+        //                }],
+        //            lengthMenu: [10, 15, 20, 25]
+        //        }
+        //    });
+        //    dt.Render();
+        //});
         $('#btnAdvancedFilterApply').click(function() {
             a2n.dyndata.Utils.dataTableInstances[currentTable].qbRuleSet = $('#qbContainer').queryBuilder('getRules');
             a2n.dyndata.Utils.dataTableInstances[currentTable].dt.ajax.reload();

@@ -35,19 +35,10 @@
     </header>
     <div class="wrapper">
         <div class="main-panel" id="main-panel">
-            <div class="row">
-                <div class="col-2">
-                    @await RenderSectionAsync("SideBar", required: false)
-                </div>
-                <div class="col-8">
-                    <div class="container" id="main-Container">
-                        @RenderBody()
-                    </div>
-                </div>
-                <div class="col-2"></div>
-            </div>
-
             <!-- Main Content -->
+            <div class="container" id="main-Container">
+                @RenderBody()
+            </div>
         </div>
     </div>
 

@@ -79,7 +79,7 @@ namespace a2n.DynData
             if (_valueType == null)
             {
                 var dynamicType = Handler(db).GetType();
-                _valueType = dynamicType.GetGenericArguments()[0];
+                _valueType = dynamicType.GenericTypeArguments[0];
             }
             return _valueType;
         }
