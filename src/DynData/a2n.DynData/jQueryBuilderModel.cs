@@ -24,7 +24,7 @@ namespace a2n.DynData
 
         public jQueryBuilderRuleSetModel ruleData { get; set; }
 
-        private ExpressionRule[] ToExpressionRule(PropertyInfo[] piArr, jQueryBuilderRuleSetModel parent = null)
+        internal ExpressionRule[] ToExpressionRule(PropertyInfo[] piArr, jQueryBuilderRuleSetModel parent = null)
         {
             List<ExpressionRule> rules = new List<ExpressionRule>();
             jQueryBuilderRuleSetModel current = parent;
@@ -72,6 +72,7 @@ namespace a2n.DynData
             if (piArr == null)
                 piArr = type.GetProperties().Where(t => t.PropertyType.Namespace == "System").ToArray();
             var rules = ToExpressionRule(piArr, null);
+           
             return ExpressionBuilder.Build(type, rules);
         }
         public static object GenerateFilterOptions(Type type, Metadata[] metadataArr)
@@ -294,8 +295,6 @@ namespace a2n.DynData
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(jQueryBuilderBaseRuleItemModel);
-
-            //return (objectType == typeof(jQueryBuilderBaseRuleItemModel) || objectType == typeof(jQueryBuilderBaseRuleItemModel[]) || objectType == typeof(jQueryBuilderModel) || objectType == typeof(jQueryBuilderModel[]));
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

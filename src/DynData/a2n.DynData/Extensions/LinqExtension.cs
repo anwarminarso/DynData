@@ -36,7 +36,7 @@ namespace System.Linq
                             .FirstOrDefault();
         }
 
-        public static PagingResult GetPagingResult<T>(this IQueryable<T> source, Func<T, object> selector, int pageSize = 20, int pageIndex = 0, object context = null)
+        public static PagingResult ToPagingResult<T>(this IQueryable<T> source, Func<T, object> selector, int pageSize = 20, int pageIndex = 0, object context = null)
         {
             var result = new PagingResult();
             result.pageSize = pageSize;
@@ -59,7 +59,7 @@ namespace System.Linq
             result.items = source.Skip(result.pageIndex * result.pageSize).Take(result.pageSize).Select(selector).ToArray();
             return result;
         }
-        public static PagingResult<T> GetPagingResult<T>(this IQueryable<T> source, int pageSize = 20, int pageIndex = 0, object context = null)
+        public static PagingResult<T> ToPagingResult<T>(this IQueryable<T> source, int pageSize = 20, int pageIndex = 0, object context = null)
         {
             var result = new PagingResult<T>();
             result.pageSize = pageSize;
@@ -135,7 +135,6 @@ namespace System.Linq
             var mtd = mtdQueryableWhereGeneric.MakeGenericMethod(sourceType);
             return mtd.Invoke(null, new object[] { query, whereExp }) as IQueryable<object>;
         }
-
         private static object CreateExpression(Type sourceType, Type propertyType, string propertyName)
         {
             var var = mtdCreateExpression.MakeGenericMethod(sourceType, propertyType);
@@ -147,5 +146,6 @@ namespace System.Linq
             Expression body = Expression.PropertyOrField(param, propertyName);
             return (Expression<Func<TSource, TKey>>)Expression.Lambda(body, param);
         }
+
     }
 }

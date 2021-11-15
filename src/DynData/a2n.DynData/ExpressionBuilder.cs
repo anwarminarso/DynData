@@ -8,6 +8,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using SysJsonSerial = System.Text.Json.Serialization;
+
 #nullable disable
 
 namespace a2n.DynData
@@ -23,7 +25,11 @@ namespace a2n.DynData
             if (!currentRule.IsBracket)
             {
                 var prop = Expression.Property(itemExpression, currentRule.ReferenceFieldName);
-                var value = currentRule.CompareFieldObject;
+                object value = null;
+                if (currentRule.CompareFieldObject == null)
+                    value = currentRule.ConvertToObjectValue();
+                else
+                    value = currentRule.CompareFieldObject;
                 switch (currentRule.Operator)
                 {
                     case ExpressionOperator.Equal:
@@ -235,6 +241,7 @@ namespace a2n.DynData
         private List<ExpressionRule> _children = new List<ExpressionRule>();
 
         [JsonConverter(typeof(StringEnumConverter))]
+        [SysJsonSerial.JsonConverter(typeof(SysJsonSerial.JsonStringEnumConverter))]
         public ExpressionLogicalOperator LogicalOperator { get; set; }
 
         [JsonIgnore]
@@ -264,6 +271,7 @@ namespace a2n.DynData
         public Type ReferenceFieldType { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
+        [SysJsonSerial.JsonConverter(typeof(SysJsonSerial.JsonStringEnumConverter))]
         public ExpressionOperator Operator { get; set; }
 
         public void AddChild(ExpressionRule value)
@@ -282,19 +290,20 @@ namespace a2n.DynData
 
         public string CompareFieldValue { get; set; }
 
-        private object _CompareFieldObject;
-        public object CompareFieldObject
-        {
-            get
-            {
-                if (_CompareFieldObject == null)
-                    _CompareFieldObject = ConvertToObjectValue();
-                return _CompareFieldObject;
-            }
-            set { _CompareFieldObject = value; }
-        }
-
-        public object ConvertToObjectValue()
+        //private object _CompareFieldObject;
+        //public object CompareFieldObject
+        //{
+        //    get
+        //    {
+        //        if (_CompareFieldObject == null)
+        //            _CompareFieldObject = ConvertToObjectValue();
+        //        return _CompareFieldObject;
+        //    }
+        //    set { _CompareFieldObject = value; }
+        //}
+        //private object _CompareFieldObject;
+        public object CompareFieldObject { get; set; }
+        internal object ConvertToObjectValue()
         {
             object result = null;
             switch (this.Operator)
@@ -309,7 +318,15 @@ namespace a2n.DynData
                 case ExpressionOperator.StartsWith:
                 case ExpressionOperator.EndsWith:
                     {
-                        result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
+                        if (ReferenceFieldType != typeof(string))
+                            result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
+                        else
+                        {
+                            if (!string.IsNullOrEmpty(CompareFieldValue) && CompareFieldValue.StartsWith("\"") && CompareFieldValue.EndsWith("\""))
+                                result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
+                            else
+                                result = CompareFieldValue;
+                        }
                     }
                     break;
                 case ExpressionOperator.In:
@@ -346,6 +363,29 @@ namespace a2n.DynData
                 child.Parent = this;
                 child.UpdateParent();
             }
+        }
+
+
+        public void ValidatePropertyType(Type baseType)
+        {
+            var propArr = baseType.GetProperties();
+            ValidatePropertyType(propArr);
+        }
+        public void ValidatePropertyType(PropertyInfo[] propArr)
+        {
+            ValidatePropertyType(this, propArr);
+        }
+        private void ValidatePropertyType(ExpressionRule rule, PropertyInfo[] propArr)
+        {
+            if (!rule.IsBracket && rule.ReferenceFieldType == null)
+            {
+                var prop = propArr.Where(t => t.Name == rule.ReferenceFieldName).FirstOrDefault();
+                if (prop == null)
+                    throw new Exception($"Property {rule.ReferenceFieldName} not found");
+                rule.ReferenceFieldType = prop.PropertyType;
+            }
+            foreach (var child in rule.Children)
+                ValidatePropertyType(child, propArr);
         }
     }
     public enum ExpressionLogicalOperator

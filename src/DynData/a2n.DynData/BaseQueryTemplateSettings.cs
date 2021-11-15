@@ -14,14 +14,27 @@ namespace a2n.DynData
     public abstract class BaseQueryTemplateSettings
     {
         private Dictionary<Type, object> dicDataView = new Dictionary<Type, object>();
-        public IQueryable<dynamic> GetQuery<T>(T db, string QueryName)
+
+        public IQueryable<dynamic> GetQuery<T>(T db, string QueryName, params ExpressionRule[] rules)
             where T : DbContext, new()
         {
             var dbCtxtView = GetQueryTemplate<T>();
             if (dbCtxtView == null)
                 return null;
             if (dbCtxtView.HasQueryName(QueryName))
-                return dbCtxtView.GetQuery(db, QueryName);
+            {
+                var qry = dbCtxtView.GetQuery(db, QueryName);
+                var viewType = dbCtxtView.GetValueType(db, QueryName);
+                if (rules != null && rules.Length > 0)
+                {
+                    foreach (var rule in rules)
+                        rule.ValidatePropertyType(viewType);
+                    var whereExp = ExpressionBuilder.Build(viewType, rules);
+                    return qry.Where(whereExp, viewType);
+                }
+                else
+                    return qry;
+            }
             else
                 return null;
         }
@@ -86,5 +99,6 @@ namespace a2n.DynData
                 return null;
             return dicDataView[dbCtxtType] as QueryTemplate<T>;
         }
+
     }
 }

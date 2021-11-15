@@ -11,15 +11,6 @@
     <link href="~/lib/jquery-querybuilder/css/query-builder.default.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
 }
-
-@*@section SideBar {
-    <ul class="list-group" id="tblLst">
-        @foreach (var item in this.Model.AllTables)
-        {
-            <li class="list-group-item"><a href="#">@item</a></li>
-        }
-    </ul>
-}*@
 @Html.AntiForgeryToken()
 <div class="row">
     <div class="col-12">
@@ -38,32 +29,6 @@
         <div id="tblContainer"></div>
     </div>
 </div>
-
-<div class="modal fade" id="mdlAdvancedFilter" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Advanced Filter</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true"><i class="fal fa-times"></i></span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="frmQB">
-                    <div class="row">
-                        <div class="col-12">
-                            <div id="qbContainer"></div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" id="btnAdvancedFilterClose" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" id="btnAdvancedFilterApply" class="btn btn-success">Apply</button>
-            </div>
-        </div>
-    </div>
-</div>
 @section Scripts {
     
     
@@ -77,98 +42,31 @@
 
 <script type="text/javascript">
     var currentTable = null;
-    var currentQB = null;
     $(function() {
         let $el = $('#tblContainer');
-
         $('#ddTableAndView').change(function() {
-            if (currentTable && a2n.dyndata.Utils.dataTableInstances[currentTable].instance){
-                a2n.dyndata.Utils.dataTableInstances[currentTable].instance.Destroy();
+            if (currentTable && a2n.dyndata.Utils.dtInstances[currentTable]){
+                a2n.dyndata.Utils.dtInstances[currentTable].Destroy();
             }
-            if (currentQB) {
-                $('#qbContainer').queryBuilder("destroy");
-            }
-            currentQB = null;
             currentTable = null;
             let val = $(this).val();
             if (!val)
                 return;
             currentTable = val;
             let dt = new a2n.dyndata.DataTable(currentTable, $el, currentTable, { 
+                dynOptions: {
+                    enableRowAction: true,
+                    enableQueryBuilder: true,
+                    minGlobalSearchCharLength: 3,
+                    useBuiltInSearchMode: false
+                },
                 tableOptions: 
                 { 
                     responsive: true,
-                    buttons: [
-                        {
-                            text: '<i class=""fal fa-sync mr-1""></i>Advanced Search',
-                            className: 'btn btn-success btn-sm',
-                            action: function (e, dt, node, config) {
-                                let obj = a2n.dyndata.Utils.dataTableInstances[currentTable];
-                                if (!currentQB){
-                                    let opt =  obj.instance.options.queryBuilderOptions;
-                                    currentQB = $('#qbContainer').queryBuilder(opt);
-                                }
-                                if (obj.qbRuleSet)
-                                    $('#qbContainer').queryBuilder('setRules', obj.qbRuleSet);
-                                
-                               $('#mdlAdvancedFilter').modal('show');
-                            }
-                        }, {
-                            text: '<i class=""fal fa-sync mr-1""></i>Reload',
-                            className: 'btn btn-info btn-sm',
-                            action: function (e, dt, node, config) {
-                                dt.ajax.reload();
-                            }
-                        }],
                     lengthMenu: [10, 15, 20, 25]
                 }
             });
             dt.Render();
-        });
-        //$("#tblLst a").click(function() {
-        //    if (currentTable && a2n.dyndata.Utils.dataTableInstances[currentTable].instance){
-        //        a2n.dyndata.Utils.dataTableInstances[currentTable].instance.Destroy();
-        //    }
-        //    if (currentQB) {
-        //        $('#qbContainer').queryBuilder("destroy");
-        //    }
-        //    currentTable = $(this).html();
-        //    currentQB = null;
-        //    let dt = new a2n.dyndata.DataTable(currentTable, $el, currentTable, { 
-        //        tableOptions: 
-        //        { 
-        //            responsive: true,
-        //            buttons: [
-        //                {
-        //                    text: '<i class=""fal fa-sync mr-1""></i>Advanced Search',
-        //                    className: 'btn btn-success btn-sm',
-        //                    action: function (e, dt, node, config) {
-        //                        let obj = a2n.dyndata.Utils.dataTableInstances[currentTable];
-        //                        if (!currentQB){
-        //                            let opt =  obj.instance.options.queryBuilderOptions;
-        //                            currentQB = $('#qbContainer').queryBuilder(opt);
-        //                        }
-        //                        if (obj.qbRuleSet)
-        //                            $('#qbContainer').queryBuilder('setRules', obj.qbRuleSet);
-                                
-        //                       $('#mdlAdvancedFilter').modal('show');
-        //                    }
-        //                }, {
-        //                    text: '<i class=""fal fa-sync mr-1""></i>Reload',
-        //                    className: 'btn btn-info btn-sm',
-        //                    action: function (e, dt, node, config) {
-        //                        dt.ajax.reload();
-        //                    }
-        //                }],
-        //            lengthMenu: [10, 15, 20, 25]
-        //        }
-        //    });
-        //    dt.Render();
-        //});
-        $('#btnAdvancedFilterApply').click(function() {
-            a2n.dyndata.Utils.dataTableInstances[currentTable].qbRuleSet = $('#qbContainer').queryBuilder('getRules');
-            a2n.dyndata.Utils.dataTableInstances[currentTable].dt.ajax.reload();
-            $('#mdlAdvancedFilter').modal('hide');
         });
     });
 </script>

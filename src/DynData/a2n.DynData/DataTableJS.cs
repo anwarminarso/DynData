@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using Newtonsoft.Json;
 #nullable disable
 namespace a2n.DynData
 {
@@ -30,8 +31,14 @@ namespace a2n.DynData
         public DataTableJSRequest()
         {
         }
-        public object ToWhereExpression(Type type, PropertyInfo[] propArr)
+        public ExpressionRule[] ToRules(Type type)
         {
+            return ToRules(type.GetProperties());
+        }
+        public ExpressionRule[] ToRules(PropertyInfo[] propArr)
+        {
+            List<ExpressionRule> result = new List<ExpressionRule>();
+
             var rootRule = new ExpressionRule()
             {
                 IsBracket = true,
@@ -62,7 +69,116 @@ namespace a2n.DynData
                 }
                 rootRule.AddChild(globalSearchRule);
             }
-            return ExpressionBuilder.Build(type, rootRule);
+
+            result.Add(rootRule);
+            if (!string.IsNullOrEmpty(jsonQB))
+            {
+                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
+                if (queryBuilder != null && queryBuilder.ruleData != null)
+                {
+                    var rules = queryBuilder.ToExpressionRule(propArr, null);
+                    foreach (var rule in rules)
+                        rootRule.AddChild(rule);
+                }
+            }
+            return result.ToArray();
+        }
+        public object ToWhereExpression(Type type)
+        {
+            return ToWhereExpression(type, type.GetProperties());
+        }
+        public object ToWhereExpression(Type type, PropertyInfo[] propArr)
+        {
+            var rules = ToRules(propArr);
+            return ExpressionBuilder.Build(type, rules);
+        }
+
+        public IQueryable<T> ToQueryable<T>(IQueryable<T> query)
+        {
+            var valueType = typeof(T);
+            var propArr = valueType.GetProperties();
+            var whereExp = ToWhereExpression(valueType, propArr) as Expression<Func<T, bool>>;
+            var qry = query;
+            if (whereExp != null)
+                qry = query.Where(whereExp);
+
+            if (this.order != null && this.order.Length > 0)
+            {
+                var ColOrderBy = columns[this.order[0].column].name;
+                bool ascending = true;
+                if (!string.IsNullOrEmpty(this.order[0].dir) && this.order[0].dir != "asc")
+                    ascending = false;
+                qry = qry.OrderBy(ColOrderBy, ascending) as IQueryable<T>;
+                if (order.Length > 1)
+                {
+                    for (int i = 1; i < order.Length; i++)
+                    {
+                        ascending = true;
+                        ColOrderBy = columns[order[i].column].name;
+                        if (!string.IsNullOrEmpty(order[i].dir) && order[i].dir != "asc")
+                            ascending = false;
+                        qry = qry.ThenBy(ColOrderBy, ascending);
+                    }
+                }
+            }
+
+            return qry;
+        }
+        public IQueryable<dynamic> ToQueryable(IQueryable<dynamic> query, Type valueType)
+        {
+            var propArr = valueType.GetProperties();
+            return ToQueryable(query, valueType, propArr);
+        }
+        public IQueryable<dynamic> ToQueryable(IQueryable<dynamic> query, Type valueType, PropertyInfo[] propArr)
+        {
+            var qry = query;
+            var whereExp = ToWhereExpression(valueType, propArr);
+            if (whereExp != null)
+                qry = query.Where(whereExp, valueType);
+
+            if (this.order != null && this.order.Length > 0)
+            {
+                var ColOrderBy = columns[this.order[0].column].name;
+                bool ascending = true;
+                if (!string.IsNullOrEmpty(this.order[0].dir) && this.order[0].dir != "asc")
+                    ascending = false;
+                qry = qry.OrderBy(ColOrderBy, valueType, ascending);
+                if (order.Length > 1)
+                {
+                    for (int i = 1; i < order.Length; i++)
+                    {
+                        ascending = true;
+                        ColOrderBy = columns[order[i].column].name;
+                        if (!string.IsNullOrEmpty(order[i].dir) && order[i].dir != "asc")
+                            ascending = false;
+                        qry = qry.ThenBy(ColOrderBy, valueType, ascending);
+                    }
+                }
+            }
+
+            return qry;
+        }
+
+        public PagingResult<T> ToPagingResult<T>(IQueryable<T> query)
+        {
+            int pageIndex = 0;
+            if (length > 0)
+                pageIndex = start / length;
+            var qry = ToQueryable(query);
+            return qry.ToPagingResult(length, pageIndex);
+        }
+        public PagingResult<dynamic> ToPagingResult(IQueryable<dynamic> query, Type valueType)
+        {
+            var propArr = valueType.GetProperties();
+            return ToPagingResult(query, valueType, propArr);
+        }
+        public PagingResult<dynamic> ToPagingResult(IQueryable<dynamic> query, Type valueType, PropertyInfo[] propArr)
+        {
+            int pageIndex = 0;
+            if (length > 0)
+                pageIndex = start / length;
+            var qry = ToQueryable(query, valueType, propArr);
+            return qry.ToPagingResult(length, pageIndex);
         }
     }
 
