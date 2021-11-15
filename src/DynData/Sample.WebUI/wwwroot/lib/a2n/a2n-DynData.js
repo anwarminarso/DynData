@@ -45,10 +45,7 @@ a2n.dyndata.Configuration = {
 
 a2n.dyndata.Utils = {
     dtInstances: {},
-    QBInstance: null,
-    OnRowAction: function (tableId, commandName, rowIndex) {
-
-    }
+    QBInstance: null
 }
 a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
     this.ID = tableId;
@@ -62,7 +59,7 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
         allowUpdate: false,
         allowDelete: false,
         allowView: false,
-        rowRowCommandButtons: [],
+        rowCommandButtons: [],
         onRowCommand: function (commandName, rowIndex, rowDate) { },
         enableQueryBuilder: true,
         metaData: [],
@@ -75,16 +72,15 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
     }
 
     if (this.dynOptions.allowView)
-        this.dynOptions.rowRowCommandButtons.push({ commandName: 'View', title: 'View', iconCls: 'fa fa-search' });
+        this.dynOptions.rowCommandButtons.push({ commandName: 'View', title: 'View', iconCls: 'fa fa-search' });
     if (this.dynOptions.allowUpdate)
-        this.dynOptions.rowRowCommandButtons.push({ commandName: 'Edit', title: 'Edit', iconCls: 'fa fa-edit' });
+        this.dynOptions.rowCommandButtons.push({ commandName: 'Edit', title: 'Edit', iconCls: 'fa fa-edit' });
     if (this.dynOptions.allowDelete)
-        this.dynOptions.rowRowCommandButtons.push({ commandName: 'Delete', title: 'Delete', iconCls: 'fa fa-trash-alt' });
+        this.dynOptions.rowCommandButtons.push({ commandName: 'Delete', title: 'Delete', iconCls: 'fa fa-trash-alt' });
 
     let ajaxUrl = a2n.dyndata.Configuration.getApiDataTable(this.viewName);
     a2n.dyndata.Utils.dtInstances[tableId] = this;
 
-    let currentTable = viewName;
     let buttons = [];
     if (this.dynOptions.allowCreate) {
         buttons.push({
@@ -103,8 +99,11 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
             text: '<i class="fas fa-filter mr-1"></i>Advanced Search',
             className: 'btn btn-warning btn-sm text-white',
             action: function (e, dt, node, config) {
-                let obj = a2n.dyndata.Utils.dtInstances[currentTable];
-                a2n.dyndata.Utils.QBInstance.Show(currentTable, obj.qbRuleSet, obj.dynOptions.queryBuilderOptions);
+                let obj = a2n.dyndata.Utils.dtInstances[viewName];
+                a2n.dyndata.Utils.QBInstance.Show(viewName, obj.qbRuleSet, obj.dynOptions.queryBuilderOptions, function (ruleSet) {
+                    obj.qbRuleSet = ruleSet;
+                    obj.dt.ajax.reload();
+                });
             }
         });
     }
@@ -209,11 +208,11 @@ a2n.dyndata.DataTable.prototype = {
                 $row.append(`<th data-name="${data.FieldName}">${data.FieldLabel}</th>`);
             columns.push({ data: data.FieldName, name: data.FieldName, title: data.FieldLabel });
         }
-        if (_this.dynOptions.rowRowCommandButtons && _this.dynOptions.rowRowCommandButtons.length > 0) {
+        if (_this.dynOptions.rowCommandButtons && _this.dynOptions.rowCommandButtons.length > 0) {
             $row.append('<th data-searchable="false" data-sortable="false">Action</th>');
             let actionRenderer = "";
-            for (let i = 0; i < _this.dynOptions.rowRowCommandButtons.length; i++) {
-                let btn = _this.dynOptions.rowRowCommandButtons[i];
+            for (let i = 0; i < _this.dynOptions.rowCommandButtons.length; i++) {
+                let btn = _this.dynOptions.rowCommandButtons[i];
                 let btnEl = `<a class="btn btn-outline-primary btn-icon rounded-circle" onclick="a2n.dyndata.Utils.dtInstances.${_this.ID}.RowCommand('${btn.commandName}', METAROWCODE)" title="${btn.title}"><i class="${btn.iconCls}"></i></a>`;
                 actionRenderer += btnEl;
             }
@@ -346,9 +345,8 @@ a2n.dyndata.QueryBuilder.prototype = {
         let $tpl = $(tpl);
         $('body').append($tpl);
 
-
-        $(`btn${this.ID}Apply`).click(this, function () {
-            let _this = event.data;
+        $(`#btn${this.ID}Apply`).click(this, function (evt) {
+            let _this = evt.data;
             _this.Apply();
         });
 
@@ -356,14 +354,12 @@ a2n.dyndata.QueryBuilder.prototype = {
 
     },
     Apply: function () {
-        if (this.$qb) {
-            let ruleSet = this.$qb.queryBuilder('getRules');
-            if (this.options.OnApply)
-                OnApply(ruleSet);
-        }
+        let ruleSet = $(`#container${this.ID}`).queryBuilder('getRules');
+        if (this.options.OnApply)
+            this.options.OnApply(ruleSet);
         $(`#mdl${this.ID}`).modal('hide');
     },
-    Show: function (key, ruleSet, filterOptions) {
+    Show: function (key, ruleSet, filterOptions, OnApply) {
         this.Render();
         let $qb = $(`#container${this.ID}`);
         if (this.key && this.key != key && this.qb) {
@@ -375,8 +371,9 @@ a2n.dyndata.QueryBuilder.prototype = {
             this.qb = $qb.queryBuilder(filterOptions);
         }
         if (ruleSet)
-            $qb.queryBuilder('setRules', obj.qbRuleSet);
+            $qb.queryBuilder('setRules', ruleSet);
 
+        this.options.OnApply = OnApply;
         $(`#mdl${this.ID}`).modal('show');
     },
     Destroy: function () {
