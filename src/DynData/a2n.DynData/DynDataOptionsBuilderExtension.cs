@@ -37,5 +37,32 @@ namespace Microsoft.EntityFrameworkCore
             }
             return optionsBuilder;
         }
+        public static DbContextOptionsBuilder UseDynData(this DbContextOptionsBuilder optionsBuilder, DatabaseServer dbSetting, DynDbContextEventHandler eventHandler)
+        {
+            var extension = (DynDataNetOptionsExtension)(
+                optionsBuilder.Options.FindExtension<DynDataNetOptionsExtension>() ??
+                new DynDataNetOptionsExtension());
+            extension.DBSetting = dbSetting;
+            extension.Handler = eventHandler;
+            ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(extension);
+            switch (dbSetting.Provider)
+            {
+                case DatabaseProvider.SqlServer:
+                    optionsBuilder = optionsBuilder.UseSqlServer(dbSetting.ConnectionString);
+                    break;
+                case DatabaseProvider.Postgres:
+                    optionsBuilder = optionsBuilder.UseNpgsql(dbSetting.ConnectionString);
+                    break;
+                case DatabaseProvider.MySql:
+                    optionsBuilder = optionsBuilder.UseMySql(dbSetting.ConnectionString, ServerVersion.AutoDetect(dbSetting.ConnectionString));
+                    break;
+                case DatabaseProvider.Sqlite:
+                    optionsBuilder = optionsBuilder.UseSqlite(dbSetting.ConnectionString);
+                    break;
+                default:
+                    break;
+            }
+            return optionsBuilder;
+        }
     }
 }

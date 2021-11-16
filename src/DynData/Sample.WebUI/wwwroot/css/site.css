@@ -16,3 +16,97 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+
+
+
+/* alert modal */
+.modal-alert {
+    padding: 0 !important;
+    /* overriding bootstrap generated style */
+    /*.modal-body {
+		padding: 0.5rem 0;
+	}
+*/
+}
+
+    .modal-alert .modal-dialog {
+        max-width: 100% !important;
+        /* overriding bootstrap css for all media queries */
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        min-height: calc(100% - 3.5rem);
+        -webkit-transform: none !important;
+        transform: none !important;
+        /* overriding bootstrap css */
+    }
+
+    .modal-alert .modal-content {
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 0;
+        padding: 1.5rem 1rem 1rem;
+    }
+
+    .modal-alert .modal-title {
+        font-size: 1.5rem;
+        font-weight: 300;
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+    }
+
+    .modal-alert .modal-header,
+    .modal-alert .modal-body,
+    .modal-alert .modal-footer {
+        /*left: 20%;
+		width: 60%;*/
+        width: 100%;
+        max-width: 992px;
+        margin: 0 auto;
+        padding: 0;
+        color: #fff;
+        position: relative;
+        border-top-style: none;
+    }
+
+    .modal-alert .close {
+        color: #fff;
+        text-shadow: 0 1px 0 #000;
+    }
+
+/* transparent modal */
+.modal-transparent .modal-content {
+    -webkit-box-shadow: 0 1px 15px 1px rgba(86, 61, 124, 0.3);
+    box-shadow: 0 1px 15px 1px rgba(86, 61, 124, 0.3);
+}
+
+.modal-transparent .modal-content {
+    background: rgba(40, 36, 47, 0.85);
+}
+
+/* transparent backdrop */
+.modal-backdrop-transparent {
+    background: transparent;
+}
+
+.modal-footer > * {
+    margin: 0.25rem;
+}
+
+.help-block {
+    margin-top: 0.325rem;
+    font-size: 0.6875rem;
+    color: #898989;
+    background: #eef7fd;
+    border-left: 3px solid #1dc9b7;
+    padding: 0.5rem;
+}

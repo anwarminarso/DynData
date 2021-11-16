@@ -21,10 +21,10 @@ namespace Sample.WebUI
     [ApiController]
     public class DynDataController : ControllerBase
     {
+
         private readonly ILogger<DynDataController> logger;
         private readonly AdventureWorksContext db;
         private readonly QueryTemplateSettings qryTpl;
-
         public DynDataController(ILogger<DynDataController> logger, AdventureWorksContext db, QueryTemplateSettings qryTpl)
         {
             this.logger = logger;
@@ -98,34 +98,9 @@ namespace Sample.WebUI
             JObject jObj = JObject.Parse(data.ToString());
             if (jObj.Properties().Count() == 0)
                 return null;
-
-            var qry = qryTpl.GetQuery(db, viewName);
-            if (qry != null)
+            if (qryTpl.HasQueryName(db, viewName))
             {
-                Type valueType = null;
-                Metadata[] metaArr = null;
-                ExpressionRule rootRule = new ExpressionRule() { IsBracket = true, LogicalOperator = ExpressionLogicalOperator.And };
-                valueType = qryTpl.GetValueType(db, viewName);
-                metaArr = qryTpl.GetMetadata(db, viewName);
-                var pkValues = metaArr.Where(t => jObj.ContainsKey(t.FieldName)).Select(t => new { Type = t.PropertyInfo.PropertyType, Name = t.FieldName, Value = jObj[t.FieldName] }).ToArray();
-
-                foreach (var pk in pkValues)
-                {
-                    rootRule.AddChild(new ExpressionRule()
-                    {
-                        IsBracket = false,
-                        LogicalOperator = ExpressionLogicalOperator.And,
-                        Operator = ExpressionOperator.Equal,
-                        ReferenceFieldName = pk.Name,
-                        ReferenceFieldType = pk.Type,
-                        CompareFieldValue = pk.Value.ToString()
-                    });
-                }
-                var whereExp = ExpressionBuilder.Build(valueType, rootRule);
-                if (whereExp != null)
-                    return qry.Where(whereExp, valueType).FirstOrDefault();
-                else
-                    return null;
+                return qryTpl.FindByKey(db, viewName, jObj);
             }
             else
             {
@@ -163,35 +138,52 @@ namespace Sample.WebUI
         [Route("/api/dyndata/{viewName}/metadata")]
         [HttpPost]
         [HttpGet]
-        public Metadata[] GetMetadata(string viewName)
+        public MetadataInfo GetMetadata(string viewName)
         {
             Metadata[] results = new Metadata[0];
+            string crudTableName = null;
             results = qryTpl.GetMetadata(db, viewName);
-            if (results == null)
+            if (results != null)
+            {
+                var crudTableType = qryTpl.GetCRUDTableType(db, viewName);
+                if (crudTableType != null)
+                    crudTableName = crudTableType.Name;
+            }
+            else
             {
                 var tableType = db.GetTableType(viewName);
                 if (tableType != null)
                 {
                     results = db.GetMetadata(viewName);
+                    crudTableName = tableType.Name;
                 }
                 else
                     results = new Metadata[0];
             }
 
-            return results;
+            return new MetadataInfo()
+            {
+                viewName = viewName,
+                metaData = results,
+                crudTableName = crudTableName
+            };
         }
 
         [Route("/api/dyndata/{viewName}/metadataQB")]
         [HttpPost]
         [HttpGet]
-        public object GetMetadataQB(string viewName)
+        public MetadataInfo GetMetadataQB(string viewName)
         {
             Type tableType = null;
             Metadata[] results = new Metadata[0];
             results = qryTpl.GetMetadata(db, viewName);
+            string crudTableName = null;
             if (results != null)
             {
                 tableType = qryTpl.GetValueType(db, viewName);
+                var crudTableType = qryTpl.GetCRUDTableType(db, viewName);
+                if (crudTableType != null)
+                    crudTableName = crudTableType.Name;
             }
             else
             {
@@ -199,15 +191,17 @@ namespace Sample.WebUI
                 if (tableType != null)
                 {
                     results = db.GetMetadata(viewName);
+                    crudTableName = tableType.Name;
                 }
                 else
                     results = new Metadata[0];
             }
 
-            return new
+            return new MetadataInfo()
             {
+                viewName = viewName,
                 metaData = results,
-                isTable = results.Where(t => t.IsPrimaryKey).FirstOrDefault(),
+                crudTableName = crudTableName,
                 queryBuilderOptions = jQueryBuilderModel.GenerateFilterOptions(tableType, results)
             };
         }

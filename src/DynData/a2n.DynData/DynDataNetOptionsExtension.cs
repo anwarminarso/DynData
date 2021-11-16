@@ -14,8 +14,9 @@ namespace a2n.DynData
     public class DynDataNetOptionsExtension : IDbContextOptionsExtension
     {
         private DbContextOptionsExtensionInfo _info;
-        public DbContextOptionsExtensionInfo Info => _info ??= new myRaspNetExtensionInfo(this);
+        public DbContextOptionsExtensionInfo Info => _info ??= new DynDataNetExtensionInfo(this);
         public DatabaseServer DBSetting { get; set; }
+        public DynDbContextEventHandler Handler { get; set; }
         public DynDataNetOptionsExtension()
         {
         }
@@ -30,7 +31,7 @@ namespace a2n.DynData
         public void Validate(IDbContextOptions options)
         {
         }
-        private class myRaspNetExtensionInfo : DbContextOptionsExtensionInfo
+        private class DynDataNetExtensionInfo : DbContextOptionsExtensionInfo
         {
             private int? _serviceProviderHash;
             private new DynDataNetOptionsExtension Extension
@@ -39,7 +40,7 @@ namespace a2n.DynData
 
             public override string LogFragment => String.Empty;
 
-            public myRaspNetExtensionInfo(IDbContextOptionsExtension extension)
+            public DynDataNetExtensionInfo(IDbContextOptionsExtension extension)
                 : base(extension)
             {
             }

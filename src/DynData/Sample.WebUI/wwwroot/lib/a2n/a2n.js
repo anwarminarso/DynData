@@ -39,6 +39,27 @@
                 }
             });
         },
+        submitAjaxJsonPost: function (url, jsonData, onSuccess, onError) {
+            // submit raw json data
+            $.ajax({
+                type: "POST",
+                headers: {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').first().val()
+                },
+                url: url,
+                processData: false,
+                contentType: 'application/json',
+                data: jsonData,
+                success: function (data, status, xhr) {
+                    if (onSuccess)
+                        onSuccess(data, status, xhr);
+                },
+                error: function (req, status, error) {
+                    if (onError)
+                        onError(req, status, error);
+                }
+            });
+        },
         submitPost: function (url, data, frmId) {
             var _frmId = "";
             var keys = data !== undefined ? Object.keys(data) : {};
@@ -131,5 +152,47 @@
                 }
             }
         },
+        playSound: function (path, sound) {
+            let $audioElement = $('#appAudio');
+            if ($audioElement.length === 0) {
+                $audioElement = $(`<audio id="appAudio"></audio>`);
+                $('body').append($audioElement);
+            }
+            if (navigator.userAgent.match('Firefox/'))
+                $audioElement.attr('src', path + "/" + sound + '.ogg');
+            else
+                $audioElement.attr('src', path + "/" + sound + '.mp3');
+
+            $audioElement.on("load", function () {
+                $audioElement[0].play();
+            });
+            $audioElement[0].pause();
+            $audioElement[0].play();
+        },
+        showConfirmDelete: function (fun, options) {
+            var opt = {
+                title: "<i class='fa fa-times-circle text-danger mr-2'></i> Do you wish to delete this item?",
+                message: "<br /><br /><span><strong>Warning:</strong> This action cannot be undone!</span>",
+                centerVertical: true,
+                swapButtonOrder: false,
+                buttons: {
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn-danger'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn-primary mr-3'
+                    }
+                },
+                className: "modal-alert",
+                closeButton: false,
+                callback: fun
+            };
+            if (options)
+                $.extend(opt, options);
+            a2n.playSound('/media/sound', 'bigbox');
+            bootbox.confirm(opt);
+        }
     }
 }));

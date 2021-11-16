@@ -27,33 +27,4 @@ namespace a2n.DynData
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? ascending { get; set; } = null;
     }
-    //public class SimpleExpressionRule
-    //{
-    //    [JsonConverter(typeof(StringEnumConverter))]
-    //    [SysJsonSerial.JsonConverter(typeof(SysJsonSerial.JsonStringEnumConverter))]
-    //    public ExpressionLogicalOperator LogicalOperator { get; set; }
-
-    //    [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingDefault)]
-    //    public bool IsBracket { get; set; } = false;
-
-    //    public string ReferenceFieldName { get; set; }
-
-    //    [JsonConverter(typeof(StringEnumConverter))]
-    //    [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
-    //    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    //    public ExpressionOperator Operator { get; set; }
-
-    //    [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
-    //    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    //    public object CompareFieldObject { get; set; }
-
-    //    [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
-    //    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    //    public string CompareFieldValue { get; set; }
-
-    //    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    //    public SimpleExpressionRule[] Children { get; set; }
-
-
-    //}
 }

@@ -46,7 +46,11 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
             });
             services.AddDbContext<AdventureWorksContext>(o =>
             {
-                o.UseDynData(settings.DBConnectionSetting);
+                // without custom event handler
+                //o.UseDynData(settings.DBConnectionSetting);
+                
+                // with custom event handler
+                o.UseDynData(settings.DBConnectionSetting, new EventHandlers.AdventureWorksContextHandler());
             });
             services.AddSingleton<QueryTemplateSettings>();
             #region Compression

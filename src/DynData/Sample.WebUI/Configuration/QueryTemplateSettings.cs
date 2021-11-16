@@ -19,7 +19,9 @@ namespace Sample.WebUI.Configuration
 
 
             // dari view vSalesPerson di db dijadikan linq query
-            Template.AddQuery("IniQueryTemplate_vSalesPerson", db =>
+            Template.AddQuery("IniQueryTemplate_vSalesPerson", 
+                typeof(SalesPerson),
+                db =>
                 {
                     var qry = (from s in db.SalesPeople
                                join e in db.Employees on s.BusinessEntityId equals e.BusinessEntityId
@@ -58,6 +60,11 @@ namespace Sample.WebUI.Configuration
                                    s.SalesLastYear
                                });
                     return qry;
+                },
+                meta =>
+                {
+                    if (meta.FieldName == "BusinessEntityId")
+                        meta.IsPrimaryKey = true;
                 }
             );
 

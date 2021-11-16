@@ -12,11 +12,13 @@ namespace a2n.DynData
 {
     public abstract class DynDbContext : DbContext
     {
+        private DynDbContextEventHandler Handler;
         private static object lockObj = new object();
 
-        private static MethodInfo mtdEntryWithoutDetectChanges;
         private static readonly Dictionary<Type, Dictionary<string, Type>> dicTables;
         private static readonly Dictionary<Type, Dictionary<string, Metadata[]>> dicMetadata;
+
+
 
         public DatabaseServer DBSetting { get; set; }
         public ServerVersion MySqlVersion { get; set; }
@@ -76,7 +78,11 @@ namespace a2n.DynData
             else
             {
                 var extension = optionsBuilder.Options.FindExtension<DynDataNetOptionsExtension>();
-                this.DBSetting = extension.DBSetting;
+                if (extension != null)
+                {
+                    this.DBSetting = extension.DBSetting;
+                    this.Handler = extension.Handler;
+                }
             }
         }
 
@@ -292,12 +298,17 @@ namespace a2n.DynData
             if (value.Type == JTokenType.Array)
             {
                 var dataArr = value.ToObject(valueType.MakeArrayType()) as object[];
+
+                if (Handler != null && !Handler.OnBeforeCreate(this, valueType, dataArr))
+                    return null;
                 AddRange(dataArr);
                 return dataArr;
             }
             else
             {
                 var data = value.ToObject(valueType);
+                if (Handler != null && !Handler.OnBeforeCreate(this, valueType, data))
+                    return null;
                 Add(data);
                 return new object[] { data };
             }
@@ -306,6 +317,8 @@ namespace a2n.DynData
         {
             var valueType = GetTableType(tableName);
             var data = value.ToObject(valueType);
+            if (Handler != null && !Handler.OnBeforeCreate(this, valueType, data))
+                return null;
             Add(data);
             return data;
         }
@@ -349,6 +362,10 @@ namespace a2n.DynData
                 var oldData = FindByKey(valueType, jObj);
                 if (oldData == null)
                     throw new Exception($"Data {jObj.ToString()} not found");
+
+                if (Handler != null && !Handler.OnBeforeUpdate(this, valueType, oldData, jObj))
+                    continue;
+
                 var modifiedPropArr = metaArrr.Where(t => !t.IsPrimaryKey && jObj.ContainsKey(t.FieldName)).Select(t => t.PropertyInfo).ToArray();
                 foreach (var modifiedProp in modifiedPropArr)
                 {
@@ -358,6 +375,7 @@ namespace a2n.DynData
                     else
                         modifiedProp.SetValue(oldData, null);
                 }
+                Handler?.OnAfterUpdate(this, valueType, oldData);
                 result.Add(oldData);
             }
             return result.ToArray();
@@ -370,6 +388,10 @@ namespace a2n.DynData
             var metaArr = GetMetadata(tableName);
             if (oldData == null)
                 throw new Exception($"Data {value.ToString()} not found");
+
+            if (Handler != null && !Handler.OnBeforeUpdate(this, valueType, oldData, value))
+                return null;
+
             var modifiedPropArr = metaArr.Where(t => !t.IsPrimaryKey && value.ContainsKey(t.FieldName)).Select(t => t.PropertyInfo).ToArray();
             foreach (var modifiedProp in modifiedPropArr)
             {
@@ -379,6 +401,7 @@ namespace a2n.DynData
                 else
                     modifiedProp.SetValue(oldData, null);
             }
+            Handler?.OnAfterUpdate(this, valueType, oldData);
             return oldData;
         }
 
@@ -417,6 +440,10 @@ namespace a2n.DynData
                 var oldData = FindByKey(valueType, jObj);
                 if (oldData == null)
                     throw new Exception($"Data {jObj.ToString()} not found");
+
+                if (Handler != null && !Handler.OnBeforeDelete(this, valueType, oldData))
+                    continue;
+
                 Remove(oldData);
                 result.Add(oldData);
             }
@@ -430,6 +457,8 @@ namespace a2n.DynData
             var metaArr = GetMetadata(tableName);
             if (oldData == null)
                 throw new Exception($"Data {jKey.ToString()} not found");
+            if (Handler != null && !Handler.OnBeforeDelete(this, valueType, oldData))
+                return null;
             Remove(oldData);
             return oldData;
         }
@@ -452,5 +481,24 @@ namespace a2n.DynData
             return qry.Where(whereExp, tableType);
         }
 
+    }
+
+    public abstract class DynDbContextEventHandler
+    {
+        public virtual bool OnBeforeCreate(DynDbContext db, Type valueType, object value)
+        {
+            return true;
+        }
+        public virtual bool OnBeforeUpdate(DynDbContext db, Type valueType, object originalValue, JObject valueToModified)
+        {
+            return true;
+        }
+        public virtual void OnAfterUpdate(DynDbContext db, Type valueType, object modifiedValue)
+        {
+        }
+        public virtual bool OnBeforeDelete(DynDbContext db, Type valueType, object value)
+        {
+            return true;
+        }
     }
 }

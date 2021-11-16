@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
+using Newtonsoft.Json.Linq;
 
 #nullable disable
 
@@ -15,6 +16,14 @@ namespace a2n.DynData
     {
         private Dictionary<Type, object> dicDataView = new Dictionary<Type, object>();
 
+        public bool HasQueryName<T>(T db, string QueryName)
+            where T : DbContext, new()
+        {
+            var dbCtxtView = GetQueryTemplate<T>();
+            if (dbCtxtView == null)
+                return false;
+            return dbCtxtView.HasQueryName(QueryName);
+        }
         public IQueryable<dynamic> GetQuery<T>(T db, string QueryName, params ExpressionRule[] rules)
             where T : DbContext, new()
         {
@@ -35,6 +44,46 @@ namespace a2n.DynData
                 else
                     return qry;
             }
+            else
+                return null;
+        }
+        public dynamic FindByKey<T>(T db, string QueryName, string jsonKeyValues)
+            where T : DbContext, new()
+        {
+            var jKey = JObject.Parse(jsonKeyValues);
+            return FindByKey(db, QueryName, jKey);
+        }
+        public dynamic FindByKey<T>(T db, string QueryName, System.Text.Json.JsonElement keyValues)
+            where T : DbContext, new()
+        {
+            var jKey = JObject.Parse(keyValues.ToString());
+            return FindByKey(db, QueryName, jKey);
+        }
+        public dynamic FindByKey<T>(T db, string QueryName, JObject jKey)
+            where T : DbContext, new()
+        {
+            ExpressionRule rootRule = new ExpressionRule() { IsBracket = true, LogicalOperator = ExpressionLogicalOperator.And };
+            var valueType = this.GetValueType(db, QueryName);
+            var metaArr = this.GetMetadata<T>(db, QueryName);
+            var pkValues = metaArr.Where(t => t.IsPrimaryKey && jKey.ContainsKey(t.FieldName)).Select(t => new { Type = t.PropertyInfo.PropertyType, Name = t.FieldName, Value = jKey[t.FieldName] }).ToArray();
+            if (pkValues.Length == 0)
+                return null;
+            var qry = this.GetQuery(db, QueryName);
+            foreach (var pk in pkValues)
+            {
+                rootRule.AddChild(new ExpressionRule()
+                {
+                    IsBracket = false,
+                    LogicalOperator = ExpressionLogicalOperator.And,
+                    Operator = ExpressionOperator.Equal,
+                    ReferenceFieldName = pk.Name,
+                    ReferenceFieldType = pk.Type,
+                    CompareFieldValue = pk.Value.ToString()
+                });
+            }
+            var whereExp = ExpressionBuilder.Build(valueType, rootRule);
+            if (whereExp != null)
+                return qry.Where(whereExp, valueType).FirstOrDefault();
             else
                 return null;
         }
@@ -68,6 +117,17 @@ namespace a2n.DynData
                 return null;
             if (dbCtxtView.HasQueryName(QueryName))
                 return dbCtxtView.GetValueType(db, QueryName);
+            else
+                return null;
+        }
+        public Type GetCRUDTableType<T>(T db, string QueryName)
+           where T : DbContext
+        {
+            var dbCtxtView = GetQueryTemplate<T>();
+            if (dbCtxtView == null)
+                return null;
+            if (dbCtxtView.HasQueryName(QueryName))
+                return dbCtxtView.GetCRUDTableType(QueryName);
             else
                 return null;
         }
