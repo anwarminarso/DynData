@@ -58,8 +58,14 @@ namespace a2n.DynData
                     var meta = GetEntityType(tableType);
                     var metaProps = meta.GetProperties();
                     List<Metadata> metadataLst = new List<Metadata>();
+
                     foreach (var p in metaProps)
-                        metadataLst.Add(new Metadata(p));
+                    {
+                        if (Handler != null)
+                            metadataLst.Add(new Metadata(p, Handler.OnMetaGenerated));
+                        else
+                            metadataLst.Add(new Metadata(p));
+                    }
                     metadataTypes.Add(tableType.Name.ToString(), metadataLst.ToArray());
                 }
 
@@ -485,6 +491,9 @@ namespace a2n.DynData
 
     public abstract class DynDbContextEventHandler
     {
+        public virtual void OnMetaGenerated(Metadata meta)
+        {
+        }
         public virtual bool OnBeforeCreate(DynDbContext db, Type valueType, object value)
         {
             return true;

@@ -73,8 +73,10 @@ namespace Sample.WebUI
         {
             return Task.Run(() =>
             {
-                var qry = qryTpl.GetQuery(db, viewName, req.rules);
-                if (qry == null)
+                IQueryable<dynamic> qry = null;
+                if (qryTpl.HasQueryName(db, viewName))
+                    qry = qryTpl.GetQuery(db, viewName, req.rules);
+                else
                     qry = db.Query(viewName, req.rules);
                 if (qry != null)
                 {
@@ -84,6 +86,46 @@ namespace Sample.WebUI
                         qry = qry.OrderBy(req.orderBy, asc);
                     }
                     return qry.ToPagingResult(req.pageSize, req.pageIndex);
+                }
+                else
+                    return new PagingResult<dynamic>();
+            });
+        }
+
+
+        [Route("/api/dyndata/{viewName}/dropdown")]
+        [HttpGet]
+        public Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
+        {
+            return Task.Run(() =>
+            {
+                IQueryable<dynamic> qry = null;
+                Type valueType = null;
+                ExpressionRule rule = null;
+                if (!string.IsNullOrEmpty(search))
+                {
+                    rule = new ExpressionRule()
+                    {
+                        IsBracket = false,
+                        ReferenceFieldName = labelField,
+                        Operator = ExpressionOperator.Contains,
+                        CompareFieldValue = search
+                    };
+                }
+                if (qryTpl.HasQueryName(db, viewName))
+                {
+                    valueType = qryTpl.GetValueType(db, viewName);
+                    qry = qryTpl.GetQuery(db, viewName, rule);
+                }
+                else
+                {
+                    valueType = db.GetTableType(viewName);
+                    qry = db.Query(viewName, rule);
+                }
+                if (qry != null)
+                {
+                    //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
+                    return qry.ToPagingResult(pageSize, pageIndex);
                 }
                 else
                     return new PagingResult<dynamic>();

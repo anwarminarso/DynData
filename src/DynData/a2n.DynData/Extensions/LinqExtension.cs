@@ -2,6 +2,7 @@
 using a2n.DynData;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -14,6 +15,7 @@ namespace System.Linq
         private static MethodInfo mtdOrderByGeneric = null;
         private static MethodInfo mtdThenByGeneric = null;
         private static MethodInfo mtdCreateExpression = null;
+        private static MethodInfo mtdCreateSelectExpression = null;
 
         private static MethodInfo mtdQueryableOrderByGeneric = null;
         private static MethodInfo mtdQueryableOrderByDescGeneric = null;
@@ -26,6 +28,7 @@ namespace System.Linq
             mtdOrderByGeneric = typeof(LinqExtension).GetMethods().Where(t => t.Name == "OrderBy" && t.IsGenericMethod).FirstOrDefault();
             mtdThenByGeneric = typeof(LinqExtension).GetMethods().Where(t => t.Name == "ThenBy" && t.IsGenericMethod).FirstOrDefault();
             mtdCreateExpression = typeof(LinqExtension).GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).Where(t => t.Name == "CreateExpression" && t.IsGenericMethod).FirstOrDefault();
+            mtdCreateSelectExpression = typeof(LinqExtension).GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).Where(t => t.Name == "CreateSelectExpression" && t.IsGenericMethod).FirstOrDefault();
 
             mtdQueryableOrderByGeneric = typeof(Queryable).GetMethods().Where(t => t.Name == "OrderBy" && t.GetParameters().Length == 2).FirstOrDefault();
             mtdQueryableOrderByDescGeneric = typeof(Queryable).GetMethods().Where(t => t.Name == "OrderByDescending" && t.GetParameters().Length == 2).FirstOrDefault();
@@ -135,10 +138,52 @@ namespace System.Linq
             var mtd = mtdQueryableWhereGeneric.MakeGenericMethod(sourceType);
             return mtd.Invoke(null, new object[] { query, whereExp }) as IQueryable<object>;
         }
+
+        public static IQueryable<object> Select(this IQueryable<object> query, Type sourceType, params string[] fieldNames)
+        {
+            var mtd = mtdCreateSelectExpression.MakeGenericMethod(sourceType);
+            var selector = mtd.Invoke(null, new object[] { fieldNames }) as Expression<Func<object, object>>;
+            return query.Select(selector);
+        }
+        private static Expression<Func<T, dynamic>> CreateSelectExpression<T>(params string[] fieldNames)
+        {
+            if (fieldNames == null || fieldNames.Length == 0)
+                throw new ArgumentNullException(nameof(fieldNames));
+            Type sourceType = typeof(T);
+            Type outputType = null; 
+            var _fieldNameDist = fieldNames.Distinct().ToArray();
+            string[] _fieldNames = fieldNames;
+            if (fieldNames.Length != _fieldNameDist.Length)
+                _fieldNames = _fieldNameDist;
+            //object exObj = new ExpandoObject();
+            //var dicExpObj =  exObj as IDictionary<string, object>;
+            //foreach (var field in _fieldNames)
+            //{
+            //    dicExpObj.Add(field, null);
+            //}
+            //outputType = exObj.GetType();
+            var xParameter = Expression.Parameter(sourceType, "t");
+
+            var xNew = Expression.New(sourceType);
+            // create initializers
+            var bindings = _fieldNames.Select(t =>
+            {
+                var mi = typeof(T).GetProperty(t);
+                var xOriginal = Expression.Property(xParameter, mi);
+                return Expression.Bind(mi, xOriginal);
+            });
+
+            // initialization "new Data { Field1 = o.Field1, Field2 = o.Field2 }"
+            var xInit = Expression.MemberInit(xNew, bindings);
+            // expression "t => new T { Field1 = t.Field1, Field2 = t.Field2 }"
+            var lambda = Expression.Lambda<Func<T, dynamic>>(xInit, xParameter);
+            return lambda;
+        }
+        
         private static object CreateExpression(Type sourceType, Type propertyType, string propertyName)
         {
-            var var = mtdCreateExpression.MakeGenericMethod(sourceType, propertyType);
-            return var.Invoke(null, new object[] { propertyName });
+            var mtd = mtdCreateExpression.MakeGenericMethod(sourceType, propertyType);
+            return mtd.Invoke(null, new object[] { propertyName });
         }
         private static Expression<Func<TSource, TKey>> CreateExpression<TSource, TKey>(string propertyName)
         {

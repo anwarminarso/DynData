@@ -19,6 +19,8 @@ a2n.dyndata.Configuration = {
     API_METADATA_TEMPLATE: "/api/dyndata/${viewName}/metadata",
     API_METADATAQB_TEMPLATE: "/api/dyndata/${viewName}/metadataQB",
     API_DATATABLE_TEMPLATE: "/api/dyndata/${viewName}/datatable",
+    API_LIST: "/api/dyndata/${viewName}/list",
+    API_DROPDOWN: "/api/dyndata/${viewName}/dropdown",
     API_CREATE: "/api/dyndata/${viewName}/create",
     API_READ: "/api/dyndata/${viewName}/read",
     API_UPDATE: "/api/dyndata/${viewName}/update",
@@ -31,6 +33,12 @@ a2n.dyndata.Configuration = {
     },
     getApiDataTable: function (viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_DATATABLE_TEMPLATE + "`");
+    },
+    getApiList: function (viewName) {
+        return eval("`" + a2n.dyndata.Configuration.API_LIST + "`");
+    },
+    getApiDropDown: function (viewName) {
+        return eval("`" + a2n.dyndata.Configuration.API_DROPDOWN + "`");
     },
     getApiCreate: function (viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_CREATE + "`");
@@ -479,12 +487,71 @@ a2n.dyndata.Form.prototype = {
     _FormMode: 'View',
     _GenerateForm: function (formMode) {
         let $frm = $(`#frm${this.ID}`);
+
+        //clean up component
+        if ($frm.find('select').filter("[data-principal]").length > 0)
+            $frm.find('select').filter("[data-principal]").select2('destroy');
         $frm.html('');
         $(`#mdl${this.ID} h5.modal-title`).html(`${this.viewName} ${formMode} Form`);
+
+        
         for (let i = 0; i < this.dynOptions.metaData.length; i++) {
             let meta = this.dynOptions.metaData[i];
             let $tpl = null;
-            if (!meta.IsForeignKey) {
+            if (meta.IsForeignKey) {
+                let tpl = `<div class="form-group">
+    <label class="form-label" for="cb${meta.FieldName}">${meta.PrincipalLabel}</label>
+    <select class="form-control" id="cb${meta.FieldName}" data-principal="${meta.PrincipalName}" data-keyfield="${meta.PrincipalFieldName}" data-labelfield="${meta.PrincipalDisplayFieldName}" data-live-search="true" name="${meta.FieldName}" ${!meta.IsNullable ? "required" : ""}></select>
+</div>`;
+                $tpl = $(tpl);
+                if (meta.IsPrimaryKey) {
+                    $tpl.find('select').attr('data-pk', 'true');
+                }
+                let keys = { keyField: meta.PrincipalFieldName, labelField: meta.PrincipalDisplayFieldName }
+                $frm.append($tpl);
+                $tpl.find('select').select2({
+                    theme: "bootstrap4",
+                    allowClear: true,
+                    placeholder: `--- Select a ${meta.PrincipalLabel} ---`,
+                    minimumInputLength: 2,
+                    ajax: {
+                        url: a2n.dyndata.Configuration.getApiDropDown(meta.PrincipalName),
+                        type: "GET",
+                        contentType: 'application/json',
+                        data: function (params) {
+                            let query = {
+                                search: params.term,
+                                keyField: keys.keyField,
+                                labelField: keys.labelField,
+                                pageIndex: params.nextPageIndex || 0,
+                                pageSize: params.pageSize || 20
+                            }
+                            return query;
+                        },
+                        processResults: function (data, params) {
+                            params.pageIndex = data.pageIndex || 0;
+                            params.pageSize = data.pageSize || 20;
+                            params.nextPageIndex = params.pageIndex;
+                            let more = data.pageSize ? ((data.pageIndex + 1) * data.pageSize) < data.totalRows : false;
+                            if (more)
+                                params.nextPageIndex++;
+                            let results = [];
+                            for (var i = 0; i < data.items.length; i++) {
+                                let item = data.items[i];
+                                results.push({ id: item[keys.keyField], text: item[keys.labelField] });
+                            }
+                            return {
+                                results: results,
+                                pagination: {
+                                    more: more
+                                }
+                            };
+                        },
+                        cache: false
+                    }
+                });
+            }
+            else {
                 switch (meta.FieldType) {
                     case 'Int16':
                     case 'Int32':
@@ -493,12 +560,15 @@ a2n.dyndata.Form.prototype = {
                             let tpl = `
 <div class="form-group">
     <label class="form-label" for="nm${meta.FieldName}">${meta.FieldLabel}</label>
-    <input id="nm${meta.FieldName}" type="number" class="form-control" name="${meta.FieldName}" ${meta.IsNullable ? "required" : ""} />
+    <input id="nm${meta.FieldName}" type="number" class="form-control" name="${meta.FieldName}" ${!meta.IsNullable ? "required" : ""} />
 </div>`;
                             $tpl = $(tpl);
                             if (meta.IsAutoGenerated) {
                                 $tpl.find('input').attr('readonly', 'readonly');
                                 $tpl.find('input').attr('data-autogen', 'true');
+                            }
+                            if (meta.IsPrimaryKey) {
+                                $tpl.find('input').attr('data-pk', 'true');
                             }
                         }
                         break;
@@ -509,12 +579,15 @@ a2n.dyndata.Form.prototype = {
                             let tpl = `
 <div class="form-group">
     <label class="form-label" for="nm${meta.FieldName}">${meta.FieldLabel}</label>
-    <input id="nm${meta.FieldName}" type="number" class="form-control" min="0" name="${meta.FieldName}" ${meta.IsNullable ? "required" : ""} />
+    <input id="nm${meta.FieldName}" type="number" class="form-control" min="0" name="${meta.FieldName}" ${!meta.IsNullable ? "required" : ""} />
 </div>`;
                             $tpl = $(tpl);
                             if (meta.IsAutoGenerated) {
                                 $tpl.find('input').attr('readonly', 'readonly');
                                 $tpl.find('input').attr('data-autogen', 'true');
+                            }
+                            if (meta.IsPrimaryKey) {
+                                $tpl.find('input').attr('data-pk', 'true');
                             }
                         }
                         break;
@@ -525,9 +598,12 @@ a2n.dyndata.Form.prototype = {
                             let tpl = `
 <div class="form-group">
     <label class="form-label" for="nm${meta.FieldName}">${meta.FieldLabel}</label>
-    <input id="nm${meta.FieldName}" type="number" class="form-control" min="0" name="${meta.FieldName}" step="0.25" ${meta.IsNullable ? "required" : ""} />
+    <input id="nm${meta.FieldName}" type="number" class="form-control" min="0" name="${meta.FieldName}" step="0.25" ${!meta.IsNullable ? "required" : ""} />
 </div>`;
                             $tpl = $(tpl);
+                            if (meta.IsPrimaryKey) {
+                                $tpl.find('input').attr('data-pk', 'true');
+                            }
                         }
                         break;
                     case "DateTime":
@@ -535,9 +611,12 @@ a2n.dyndata.Form.prototype = {
                             let tpl = `
 <div class="form-group">
     <label class="form-label" for="dt${meta.FieldName}">${meta.FieldLabel}</label>
-    <input id="dt${meta.FieldName}" type="datetime-local" class="form-control" name="${meta.FieldName}"  ${meta.IsNullable ? "required" : ""} />
+    <input id="dt${meta.FieldName}" type="datetime-local" class="form-control" name="${meta.FieldName}"  ${!meta.IsNullable ? "required" : ""} />
 </div>`;
                             $tpl = $(tpl);
+                            if (meta.IsPrimaryKey) {
+                                $tpl.find('input').attr('data-pk', 'true');
+                            }
                         }
                         break;
                     case "Boolean":
@@ -562,16 +641,19 @@ a2n.dyndata.Form.prototype = {
                             let tpl = `
 <div class="form-group">
     <label class="form-label" for="tb${meta.FieldName}">${meta.FieldLabel}</label>
-    <input id="tb${meta.FieldName}" type="text" class="form-control" name="${meta.FieldName}" ${meta.IsNullable ? "required" : ""} />
+    <input id="tb${meta.FieldName}" type="text" class="form-control" name="${meta.FieldName}" ${!meta.IsNullable ? "required" : ""} />
 </div>`;
                             $tpl = $(tpl);
+                            if (meta.IsPrimaryKey) {
+                                $tpl.find('input').attr('data-pk', 'true');
+                            }
                         }
                     default:
                         break;
                 }
+                if ($tpl)
+                    $frm.append($tpl);
             }
-            if ($tpl)
-                $frm.append($tpl);
         }
         this._IsFormGenerated = true;
     },
@@ -625,7 +707,15 @@ a2n.dyndata.Form.prototype = {
         $('body').append($tpl);
         this.$el = $tpl;
 
-        $(`#btn${this.ID}Submit`).click(this, function(evt) {
+        $(`#btn${this.ID}Submit`).click(this, function (evt) {
+            let $frm = $(`#frm${evt.data.ID}`);
+
+            if ($frm[0].checkValidity() === false) {
+                $frm.addClass('was-validated');
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
             evt.data.Submit();
         });
         this._IsRendered = true;
@@ -633,7 +723,14 @@ a2n.dyndata.Form.prototype = {
     Submit: function () {
         let $frm = $(`#frm${this.ID}`);
         let data = a2n.createObjectFromFormInputName($frm);
-
+        if (this._FormMode == "New") {
+            for (let i = 0; i < this.dynOptions.metaData.length; i++) {
+                let meta = this.dynOptions.metaData[i];
+                if (meta.IsAutoGenerated) {
+                    delete data[meta.FieldName];
+                }
+            }
+        }
         if (this._OnSubmit)
             this._OnSubmit(data, this.dynOptions.viewName);
         $(`#mdl${this.ID}`).modal('hide');
@@ -672,12 +769,22 @@ a2n.dyndata.Form.prototype = {
         }
         _this.viewName = viewName;
         _this._OnSubmit = OnSubmit;
+        _this._FormMode = formMode;
         if (!_this._IsFormGenerated)
             _this._GenerateForm(formMode);
         switch (formMode) {
             case "Edit":
+                $frm.find('input').removeAttr('readonly');
+                $frm.find('input[data-pk=true]').attr('readonly', 'readonly');
+                $frm.find('input[data-autogen=true]').attr('readonly', 'readonly');
+                $frm.find(`select`).removeAttr('disabled');
+                $frm.find(`select[data-pk=true]`).attr('disabled', 'disabled');
+                _this.$el.find(`#btn${this.ID}Submit`).removeAttr('disabled');
+                _this.$el.find(`#btn${this.ID}Submit`).removeClass('d-none');
+                break;
             case "New":
                 $frm.find('input').removeAttr('readonly');
+                $frm.find(`select`).filter("[data-principal]").removeAttr('disabled');
                 $frm.find('input[data-autogen=true]').attr('readonly', 'readonly');
                 _this.$el.find(`#btn${this.ID}Submit`).removeAttr('disabled');
                 _this.$el.find(`#btn${this.ID}Submit`).removeClass('d-none');
@@ -685,13 +792,35 @@ a2n.dyndata.Form.prototype = {
             case "View":
             default:
                 $frm.find('input').attr('readonly', 'readonly');
+                $frm.find(`select`).attr('disabled', 'disabled');
                 _this.$el.find(`#btn${this.ID}Submit`).attr('disabled', 'disabled');
                 _this.$el.find(`#btn${this.ID}Submit`).addClass('d-none');
                 break;
         }
+        $frm.removeClass('was-validated');
         $frm[0].reset();
-        if (data)
+        let $select2Arr = $frm.find('select').filter("[data-principal]");
+        if (data) {
             a2n.setFormValue($frm, data);
+            for (let i = 0; i < $select2Arr.length; i++) {
+                let $select2 = $($select2Arr[i]);
+
+                let val = data[$select2.attr('name')];
+                let principal = $select2.attr('data-principal');
+                let keyField = $select2.attr('data-keyfield');
+                let labelfield = $select2.attr('data-labelfield');
+                let apiReadUrl = a2n.dyndata.Configuration.getApiRead(principal);
+                let keyData = {};
+                keyData[keyField] = val;
+                a2n.submitAjaxJsonPost(apiReadUrl, JSON.stringify(keyData), function (result) {
+                    let resultData = { id: result[keyField], text: result[labelfield] };
+                    a2n.select2SetValue($select2, resultData, true);
+                });
+            }
+        }
+        else {
+            a2n.select2SetValue($select2Arr, null, true);
+        }
         $(`#mdl${_this.ID}`).modal('show');
     }
 }

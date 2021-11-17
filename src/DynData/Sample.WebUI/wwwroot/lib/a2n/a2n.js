@@ -152,6 +152,30 @@
                 }
             }
         },
+
+        //select2 for set value
+        select2SetValue: function ($selector, data, ajax) {
+            if (!data) {
+                $selector.val(null).trigger('change');
+                return;
+            }
+            else {
+                if ($selector.find("option[value='" + data.id + "']").length) {
+                    $selector.val(data.id).trigger('change');
+                } else {
+                    var newOption = new Option(data.text, data.id, true, true);
+                    $selector.append(newOption).trigger('change');
+                }
+            }
+            if (ajax) {
+                $selector.trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: data
+                    }
+                });
+            }
+        },
         playSound: function (path, sound) {
             let $audioElement = $('#appAudio');
             if ($audioElement.length === 0) {

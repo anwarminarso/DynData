@@ -6,6 +6,10 @@ namespace Sample.WebUI.EventHandlers
 {
     public class AdventureWorksContextHandler : DynDbContextEventHandler
     {
+        public override void OnMetaGenerated(Metadata meta)
+        {
+            base.OnMetaGenerated(meta);
+        }
         public override bool OnBeforeCreate(DynDbContext db, Type valueType, object value)
         {
             var ctxt = db as AdventureWorksContext;

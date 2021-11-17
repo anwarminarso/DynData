@@ -26,5 +26,9 @@ namespace a2n.DynData
         [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? ascending { get; set; } = null;
+
+        [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public object userContext { get; set; } = null;
     }
 }

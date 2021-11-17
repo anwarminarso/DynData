@@ -27,7 +27,16 @@ namespace a2n.DynData
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string PrincipalLabel { get; set; } = null;
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
         public string PrincipalFieldName { get; set; } = null;
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string PrincipalDisplayFieldName { get; set; } = null;
+
 
         [JsonIgnore]
         [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.Always)]
@@ -88,6 +97,12 @@ namespace a2n.DynData
                 var pr = p.FindFirstPrincipal();
                 PrincipalFieldName = pr.Name;
                 PrincipalName = pr.DeclaringType.DisplayName();
+                PrincipalLabel = HumanReadableString(PrincipalName);
+                var piLabel = pr.DeclaringEntityType.GetProperties().Where(t => t.ClrType == typeof(string)).FirstOrDefault();
+                if (piLabel != null)
+                    PrincipalDisplayFieldName = piLabel.Name;
+                else
+                    PrincipalDisplayFieldName = PrincipalFieldName;
             }
             if (act != null)
                 act(this);
