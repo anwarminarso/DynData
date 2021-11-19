@@ -87,6 +87,8 @@ namespace a2n.DynData
                 var pt = propArr.Where(t => t.Name == meta.FieldName).Select(t => t.PropertyType).FirstOrDefault();
                 if (pt == null)
                     continue;
+                if (!meta.IsSearchable)
+                    continue;
                 dicValues["label"] = meta.FieldLabel;
                 dicValues["id"] = meta.FieldName;
                 if (pt == typeof(String))

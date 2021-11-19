@@ -58,7 +58,6 @@ namespace a2n.DynData
                     var meta = GetEntityType(tableType);
                     var metaProps = meta.GetProperties();
                     List<Metadata> metadataLst = new List<Metadata>();
-
                     foreach (var p in metaProps)
                     {
                         if (Handler != null)

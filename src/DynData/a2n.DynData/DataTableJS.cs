@@ -83,6 +83,57 @@ namespace a2n.DynData
             }
             return result.ToArray();
         }
+        public ExpressionRule[] ToRules(Metadata[] metaArr)
+        {
+            List<ExpressionRule> result = new List<ExpressionRule>();
+
+            var rootRule = new ExpressionRule()
+            {
+                IsBracket = true,
+                LogicalOperator = ExpressionLogicalOperator.And
+            };
+            if (!string.IsNullOrEmpty(search.value))
+            {
+                var globalSearchRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+                foreach (var meta in metaArr)
+                {
+                    if (!meta.IsOrderable)
+                        continue;
+                    if (meta.PropertyInfo.PropertyType == typeof(String))
+                    {
+                        var childSearch = new ExpressionRule()
+                        {
+                            IsBracket = false,
+                            LogicalOperator = ExpressionLogicalOperator.Or,
+                            Operator = ExpressionOperator.Contains,
+                            ReferenceFieldName = meta.FieldName,
+                            ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                            CompareFieldObject = search.value
+                        };
+                        globalSearchRule.AddChild(childSearch);
+                    }
+                }
+                rootRule.AddChild(globalSearchRule);
+            }
+
+            result.Add(rootRule);
+            if (!string.IsNullOrEmpty(jsonQB))
+            {
+                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
+                var propArr = metaArr.Select(t => t.PropertyInfo).ToArray();
+                if (queryBuilder != null && queryBuilder.ruleData != null)
+                {
+                    var rules = queryBuilder.ToExpressionRule(propArr, null);
+                    foreach (var rule in rules)
+                        rootRule.AddChild(rule);
+                }
+            }
+            return result.ToArray();
+        }
         public object ToWhereExpression(Type type)
         {
             return ToWhereExpression(type, type.GetProperties());
@@ -90,6 +141,11 @@ namespace a2n.DynData
         public object ToWhereExpression(Type type, PropertyInfo[] propArr)
         {
             var rules = ToRules(propArr);
+            return ExpressionBuilder.Build(type, rules);
+        }
+        public object ToWhereExpression(Type type, Metadata[] metaArr)
+        {
+            var rules = ToRules(metaArr);
             return ExpressionBuilder.Build(type, rules);
         }
 
@@ -158,6 +214,35 @@ namespace a2n.DynData
 
             return qry;
         }
+        public IQueryable<dynamic> ToQueryable(IQueryable<dynamic> query, Type valueType, Metadata[] metaArr)
+        {
+            var qry = query;
+            var whereExp = ToWhereExpression(valueType, metaArr);
+            if (whereExp != null)
+                qry = query.Where(whereExp, valueType);
+
+            if (this.order != null && this.order.Length > 0)
+            {
+                var ColOrderBy = columns[this.order[0].column].name;
+                bool ascending = true;
+                if (!string.IsNullOrEmpty(this.order[0].dir) && this.order[0].dir != "asc")
+                    ascending = false;
+                qry = qry.OrderBy(ColOrderBy, valueType, ascending);
+                if (order.Length > 1)
+                {
+                    for (int i = 1; i < order.Length; i++)
+                    {
+                        ascending = true;
+                        ColOrderBy = columns[order[i].column].name;
+                        if (!string.IsNullOrEmpty(order[i].dir) && order[i].dir != "asc")
+                            ascending = false;
+                        qry = qry.ThenBy(ColOrderBy, valueType, ascending);
+                    }
+                }
+            }
+
+            return qry;
+        }
 
         public PagingResult<T> ToPagingResult<T>(IQueryable<T> query)
         {
@@ -178,6 +263,14 @@ namespace a2n.DynData
             if (length > 0)
                 pageIndex = start / length;
             var qry = ToQueryable(query, valueType, propArr);
+            return qry.ToPagingResult(length, pageIndex);
+        }
+        public PagingResult<dynamic> ToPagingResult(IQueryable<dynamic> query, Type valueType, Metadata[] metaArr)
+        {
+            int pageIndex = 0;
+            if (length > 0)
+                pageIndex = start / length;
+            var qry = ToQueryable(query, valueType, metaArr);
             return qry.ToPagingResult(length, pageIndex);
         }
     }
@@ -247,6 +340,57 @@ namespace a2n.DynData
             return result.ToArray();
         }
 
+        public ExpressionRule[] ToRules(Metadata[] metaArr)
+        {
+            List<ExpressionRule> result = new List<ExpressionRule>();
+
+            var rootRule = new ExpressionRule()
+            {
+                IsBracket = true,
+                LogicalOperator = ExpressionLogicalOperator.And
+            };
+            if (!string.IsNullOrEmpty(globalSearch))
+            {
+                var globalSearchRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+                foreach (var meta in metaArr)
+                {
+                    if (!meta.IsOrderable)
+                        continue;
+                    if (meta.PropertyInfo.PropertyType == typeof(String))
+                    {
+                        var childSearch = new ExpressionRule()
+                        {
+                            IsBracket = false,
+                            LogicalOperator = ExpressionLogicalOperator.Or,
+                            Operator = ExpressionOperator.Contains,
+                            ReferenceFieldName = meta.FieldName,
+                            ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                            CompareFieldObject = globalSearch
+                        };
+                        globalSearchRule.AddChild(childSearch);
+                    }
+                }
+                rootRule.AddChild(globalSearchRule);
+            }
+
+            result.Add(rootRule);
+            if (!string.IsNullOrEmpty(jsonQB))
+            {
+                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
+                var propArr = metaArr.Select(t => t.PropertyInfo).ToArray();
+                if (queryBuilder != null && queryBuilder.ruleData != null)
+                {
+                    var rules = queryBuilder.ToExpressionRule(propArr, null);
+                    foreach (var rule in rules)
+                        rootRule.AddChild(rule);
+                }
+            }
+            return result.ToArray();
+        }
         public object ToWhereExpression(Type type)
         {
             return ToWhereExpression(type, type.GetProperties());
@@ -254,6 +398,11 @@ namespace a2n.DynData
         public object ToWhereExpression(Type type, PropertyInfo[] propArr)
         {
             var rules = ToRules(propArr);
+            return ExpressionBuilder.Build(type, rules);
+        }
+        public object ToWhereExpression(Type type, Metadata[] metaArr)
+        {
+            var rules = ToRules(metaArr);
             return ExpressionBuilder.Build(type, rules);
         }
         public IQueryable<T> ToQueryable<T>(IQueryable<T> query)
@@ -282,6 +431,22 @@ namespace a2n.DynData
         {
             var qry = query;
             var whereExp = ToWhereExpression(valueType, propArr);
+            if (whereExp != null)
+                qry = query.Where(whereExp, valueType);
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                bool ascending = true;
+                if (!string.IsNullOrEmpty(dir) && dir != "asc")
+                    ascending = false;
+                qry = qry.OrderBy(orderBy, valueType, ascending);
+            }
+
+            return qry;
+        }
+        public IQueryable<dynamic> ToQueryable(IQueryable<dynamic> query, Type valueType, Metadata[] metaArr)
+        {
+            var qry = query;
+            var whereExp = ToWhereExpression(valueType, metaArr);
             if (whereExp != null)
                 qry = query.Where(whereExp, valueType);
             if (!string.IsNullOrEmpty(orderBy))

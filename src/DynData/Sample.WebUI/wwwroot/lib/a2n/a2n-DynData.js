@@ -141,9 +141,9 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
                 {
                     text: '<i class="fa fa-file-pdf mr-2" style="color: red"></i> Export to PDF',
                     action: function (e, dt, node, config) {
-                        let obj = a2n.dyndata.Utils.dtInstances[viewName];
-                        obj.Export('pdf');
-                        //alert('not implemented');
+                        //let obj = a2n.dyndata.Utils.dtInstances[viewName];
+                        //obj.Export('pdf');
+                        alert('Not implemented.. coming soon');
                     }
                 }]
         })
@@ -255,12 +255,12 @@ a2n.dyndata.DataTable.prototype = {
             let data = _this.dynOptions.metaData[i];
             if (data.CustomAttributes) {
                 if (data.CustomAttributes.Hidden)
-                    $row.append(`<th data-visible='false' data-name="${data.FieldName}">${data.FieldLabel}</th>`);
+                    $row.append(`<th data-visible='false' data-name="${data.FieldName}" ${!data.IsOrderable ? 'data-sortable="false"' : ""}  ${!data.IsSearchable ? 'data-searchable="false"' : ""}>${data.FieldLabel}</th>`);
                 else
-                    $row.append(`<th data-name="${data.FieldName}">${data.FieldLabel}</th>`);
+                    $row.append(`<th data-name="${data.FieldName}" ${!data.IsOrderable ? 'data-sortable="false"' : ""}  ${!data.IsSearchable ? 'data-searchable="false"' : ""}>${data.FieldLabel}</th>`);
             }
             else
-                $row.append(`<th data-name="${data.FieldName}">${data.FieldLabel}</th>`);
+                $row.append(`<th data-name="${data.FieldName}" ${!data.IsOrderable ? 'data-sortable="false"' : ""}  ${!data.IsSearchable ? 'data-searchable="false"' : ""}>${data.FieldLabel}</th>`);
             columns.push({ data: data.FieldName, name: data.FieldName, title: data.FieldLabel });
         }
         if (_this.dynOptions.hasPK && _this.dynOptions.rowCommandButtons && _this.dynOptions.rowCommandButtons.length > 0) {

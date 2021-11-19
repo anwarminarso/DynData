@@ -40,24 +40,24 @@ namespace Sample.WebUI
             {
                 var qry = qryTpl.GetQuery(db, viewName);
                 Type valueType = null;
-                PropertyInfo[] propArr = null;
+                Metadata[] metaArr = null;
                 if (qry != null)
                 {
                     valueType = qryTpl.GetValueType(db, viewName);
-                    propArr = qryTpl.GetProperties(db, viewName);
+                    metaArr = qryTpl.GetMetadata(db, viewName);
                 }
                 else
                 {
                     valueType = db.GetTableType(viewName);
                     if (valueType != null)
                     {
-                        propArr = db.GetProperties(viewName);
+                        metaArr = db.GetMetadata(viewName);
                         qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
                     }
                 }
                 if (qry != null)
                 {
-                    var page = req.ToPagingResult(qry, valueType, propArr);
+                    var page = req.ToPagingResult(qry, valueType, metaArr);
                     var resp = new DataTableJSResponse(req, page);
                     return resp;
                 }
@@ -99,7 +99,7 @@ namespace Sample.WebUI
             }
             if (qry != null)
             {
-                qry = req.ToQueryable(qry, valueType, propArr);
+                qry = req.ToQueryable(qry, valueType, metadataArr);
                 byte[] buffer = null;
                 switch (format)
                 {
@@ -115,7 +115,8 @@ namespace Sample.WebUI
                         }
                     case "pdf":
                         {
-                            // not implemented yet
+                            //not implemented
+                            //coming soon
                             return NotFound();
                         }
                     case "csv":

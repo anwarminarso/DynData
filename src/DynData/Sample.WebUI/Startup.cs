@@ -39,10 +39,6 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
 Provider        : {0}
 Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Database.GetDbConnection().Database);
                 }
-
-                Console.WriteLine("Populate Metadata...");
-                // populate Metadata
-                db.PopulateMetadata();
             });
             services.AddDbContext<AdventureWorksContext>(o =>
             {

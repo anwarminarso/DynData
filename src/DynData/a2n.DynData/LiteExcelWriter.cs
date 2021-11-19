@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 #nullable disable
 
@@ -488,6 +489,20 @@ namespace a2n.DynData
                             else
                                 sw.Write(dicExcelStrings[key]);
                         }
+                        //if (key == "xl/worksheets/sheet1.xml")
+                        //{
+                        //    using (var xw = XmlWriter.Create(entryStream))
+                        //    {
+                        //        doc.WriteTo(xw);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    using (var sw = new StreamWriter(entryStream))
+                        //    {
+                        //        sw.Write(dicExcelStrings[key]);
+                        //    }
+                        //}
                     }
                 }
             }
