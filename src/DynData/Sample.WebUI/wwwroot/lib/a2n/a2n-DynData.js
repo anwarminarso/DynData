@@ -16,9 +16,10 @@
 
 a2n.dyndata = a2n.dyndata || {};
 a2n.dyndata.Configuration = {
-    API_METADATA_TEMPLATE: "/api/dyndata/${viewName}/metadata",
-    API_METADATAQB_TEMPLATE: "/api/dyndata/${viewName}/metadataQB",
-    API_DATATABLE_TEMPLATE: "/api/dyndata/${viewName}/datatable",
+    API_METADATA: "/api/dyndata/${viewName}/metadata",
+    API_METADATAQB: "/api/dyndata/${viewName}/metadataQB",
+    API_DATATABLE: "/api/dyndata/${viewName}/datatable",
+    API_DATATABLE_EXPORT: "/api/dyndata/${viewName}/datatable/export",
     API_LIST: "/api/dyndata/${viewName}/list",
     API_DROPDOWN: "/api/dyndata/${viewName}/dropdown",
     API_CREATE: "/api/dyndata/${viewName}/create",
@@ -26,13 +27,16 @@ a2n.dyndata.Configuration = {
     API_UPDATE: "/api/dyndata/${viewName}/update",
     API_DELETE: "/api/dyndata/${viewName}/delete",
     getApiMetadata: function (viewName) {
-        return eval("`" + a2n.dyndata.Configuration.API_METADATA_TEMPLATE + "`");
+        return eval("`" + a2n.dyndata.Configuration.API_METADATA + "`");
     },
     getApiMetadataQB: function (viewName) {
-        return eval("`" + a2n.dyndata.Configuration.API_METADATAQB_TEMPLATE + "`");
+        return eval("`" + a2n.dyndata.Configuration.API_METADATAQB + "`");
     },
     getApiDataTable: function (viewName) {
-        return eval("`" + a2n.dyndata.Configuration.API_DATATABLE_TEMPLATE + "`");
+        return eval("`" + a2n.dyndata.Configuration.API_DATATABLE + "`");
+    },
+    getApiDataTableExport: function (viewName) {
+        return eval("`" + a2n.dyndata.Configuration.API_DATATABLE_EXPORT + "`");
     },
     getApiList: function (viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_LIST + "`");
@@ -71,6 +75,7 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
         allowUpdate: false,
         allowDelete: false,
         allowView: false,
+        allowExport: false,
         rowCommandButtons: [],
         onRowCommand: function (commandName, rowIndex, rowDate) { },
         enableQueryBuilder: true,
@@ -101,7 +106,7 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
             a2n.dyndata.Utils.QBInstance = new a2n.dyndata.QueryBuilder();
         }
         buttons.push({
-            text: '<i class="fas fa-filter mr-1"></i>Advanced Search',
+            text: '<i class="fas fa-filter mr-1"></i>Filter',
             className: 'btn btn-warning btn-sm text-white',
             action: function (e, dt, node, config) {
                 let obj = a2n.dyndata.Utils.dtInstances[viewName];
@@ -111,6 +116,37 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
                 });
             }
         });
+    }
+    if (this.dynOptions.allowExport) {
+        buttons.push({
+            extend: 'collection',
+            text: '<i class="fas fa-file-export mr-1"></i>Export',
+            className: 'btn btn-primary btn-sm text-white',
+            autoClose: true,
+            buttons: [
+                {
+                    text: '<i class="fa fa-file-csv mr-2" style="color: blue"></i> Export to CSV',
+                    action: function (e, dt, node, config) {
+                        let obj = a2n.dyndata.Utils.dtInstances[viewName];
+                        obj.Export('csv');
+                    }
+                },
+                {
+                    text: '<i class="fa fa-file-excel mr-2" style="color: green"></i> Export to Excel',
+                    action: function (e, dt, node, config) {
+                        let obj = a2n.dyndata.Utils.dtInstances[viewName];
+                        obj.Export('xlsx');
+                    }
+                },
+                {
+                    text: '<i class="fa fa-file-pdf mr-2" style="color: red"></i> Export to PDF',
+                    action: function (e, dt, node, config) {
+                        let obj = a2n.dyndata.Utils.dtInstances[viewName];
+                        obj.Export('pdf');
+                        //alert('not implemented');
+                    }
+                }]
+        })
     }
     buttons.push({
         text: '<i class="fa fa-sync mr-1"></i>Reload',
@@ -362,7 +398,24 @@ a2n.dyndata.DataTable.prototype = {
         if (!this._IsRendered)
             this.Render();
     },
-
+    Export: function (format) {
+        let req = { viewName: this.viewName, externalfilter: this.externalFilter };
+        let apiExportUrl = a2n.dyndata.Configuration.getApiDataTableExport(this.viewName);
+        req.globalSearch = this.dt.search();
+        req.format = format;
+        let order = this.dt.order();
+        if (order && order.length > 0) {
+            req.orderBy = this.dynOptions.metaData[order[0][0]].FieldName;
+            req.dir = order[0][1];
+        }
+        if (this.qbRuleSet) {
+            req.jsonQB = JSON.stringify({
+                referenceType: this.viewName,
+                ruleData: this.qbRuleSet
+            });
+        }
+        a2n.submitPost(apiExportUrl, req);
+    },
     Destroy: function () {
 
         if (a2n.dyndata.Utils.dtInstances[this.ID].dt) {

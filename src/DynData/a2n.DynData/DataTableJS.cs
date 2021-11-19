@@ -183,6 +183,119 @@ namespace a2n.DynData
     }
 
 
+    public class DataTableJSExportRequest
+    {
+        public string viewName { get; set; }
+        public string globalSearch { get; set; }
+        public string orderBy { get; set; }
+        public string dir { get; set; }
+        public string jsonQB { get; set; } = null;
+        public string format { get; set; }
+
+        public string externalfilter { get; set; }
+
+        public ExpressionRule[] ToRules(Type type)
+        {
+            return ToRules(type.GetProperties());
+        }
+        public ExpressionRule[] ToRules(PropertyInfo[] propArr)
+        {
+            List<ExpressionRule> result = new List<ExpressionRule>();
+
+            var rootRule = new ExpressionRule()
+            {
+                IsBracket = true,
+                LogicalOperator = ExpressionLogicalOperator.And
+            };
+            if (!string.IsNullOrEmpty(globalSearch))
+            {
+                var globalSearchRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+                foreach (var prop in propArr)
+                {
+                    if (prop.PropertyType == typeof(String))
+                    {
+                        var childSearch = new ExpressionRule()
+                        {
+                            IsBracket = false,
+                            LogicalOperator = ExpressionLogicalOperator.Or,
+                            Operator = ExpressionOperator.Contains,
+                            ReferenceFieldName = prop.Name,
+                            ReferenceFieldType = prop.PropertyType,
+                            CompareFieldObject = globalSearch
+                        };
+                        globalSearchRule.AddChild(childSearch);
+                    }
+                }
+                rootRule.AddChild(globalSearchRule);
+            }
+
+            result.Add(rootRule);
+            if (!string.IsNullOrEmpty(jsonQB))
+            {
+                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
+                if (queryBuilder != null && queryBuilder.ruleData != null)
+                {
+                    var rules = queryBuilder.ToExpressionRule(propArr, null);
+                    foreach (var rule in rules)
+                        rootRule.AddChild(rule);
+                }
+            }
+            return result.ToArray();
+        }
+
+        public object ToWhereExpression(Type type)
+        {
+            return ToWhereExpression(type, type.GetProperties());
+        }
+        public object ToWhereExpression(Type type, PropertyInfo[] propArr)
+        {
+            var rules = ToRules(propArr);
+            return ExpressionBuilder.Build(type, rules);
+        }
+        public IQueryable<T> ToQueryable<T>(IQueryable<T> query)
+        {
+            var valueType = typeof(T);
+            var propArr = valueType.GetProperties();
+            var whereExp = ToWhereExpression(valueType, propArr) as Expression<Func<T, bool>>;
+            var qry = query;
+            if (whereExp != null)
+                qry = query.Where(whereExp);
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                bool ascending = true;
+                if (!string.IsNullOrEmpty(dir) && dir != "asc")
+                    ascending = false;
+                qry = qry.OrderBy(orderBy, ascending) as IQueryable<T>;
+            }
+            return qry;
+        }
+        public IQueryable<dynamic> ToQueryable(IQueryable<dynamic> query, Type valueType)
+        {
+            var propArr = valueType.GetProperties();
+            return ToQueryable(query, valueType, propArr);
+        }
+        public IQueryable<dynamic> ToQueryable(IQueryable<dynamic> query, Type valueType, PropertyInfo[] propArr)
+        {
+            var qry = query;
+            var whereExp = ToWhereExpression(valueType, propArr);
+            if (whereExp != null)
+                qry = query.Where(whereExp, valueType);
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                bool ascending = true;
+                if (!string.IsNullOrEmpty(dir) && dir != "asc")
+                    ascending = false;
+                qry = qry.OrderBy(orderBy, valueType, ascending);
+            }
+
+            return qry;
+        }
+
+    }
     public class DataTableJSSearch
     {
         public bool regex { get; set; }

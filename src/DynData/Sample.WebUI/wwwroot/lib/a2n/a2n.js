@@ -2,7 +2,7 @@
 /// <reference path="../bootstrap/dist/js/bootstrap.bundle.js" />
 
 
-// myRaspNet
+// a2n
 // version 1.0.0
 // © Anwar Minarso, 2021
 // https://github.com/anwarminarso
@@ -70,7 +70,7 @@
                     _frmId = '#' + frmId;
             }
             else {
-                _frmId = '#' + myRaspNet._dummyFormId;
+                _frmId = '#' + a2n._dummyFormId;
                 $(_frmId).remove();
             }
 
@@ -87,7 +87,7 @@
             $(_frmId).find('input:hidden[name!="__RequestVerificationToken"]').val("");
             var token = $('input:hidden[name="__RequestVerificationToken"]').first().val();
             for (var j = 0; j < keys.length; j++) {
-                $(_frmId).find(String.format("input:hidden[name='{0}']", keys[j])).val(values[j]);
+                $(_frmId).find(`input:hidden[name=${keys[j]}]`).val(values[j]);
             }
             if (token) {
                 if ($(_frmId).find('input:hidden[name="__RequestVerificationToken"]').length === 0) {

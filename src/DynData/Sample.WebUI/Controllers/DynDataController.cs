@@ -67,6 +67,75 @@ namespace Sample.WebUI
         }
 
 
+
+        [Route("/api/dyndata/{viewName}/datatable/export")]
+        [HttpPost]
+        public IActionResult ExportDataTable(string viewName, [FromForm] DataTableJSExportRequest req)
+        {
+            string format = string.Empty;
+            if (string.IsNullOrEmpty(req.format))
+                format = "csv";
+            else
+                format = req.format.ToLower();
+            var qry = qryTpl.GetQuery(db, viewName);
+            Type valueType = null;
+            Metadata[] metadataArr = null;
+            PropertyInfo[] propArr = null;
+            if (qry != null)
+            {
+                valueType = qryTpl.GetValueType(db, viewName);
+                propArr = qryTpl.GetProperties(db, viewName);
+                metadataArr = qryTpl.GetMetadata(db, viewName);
+            }
+            else
+            {
+                valueType = db.GetTableType(viewName);
+                if (valueType != null)
+                {
+                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    propArr = db.GetProperties(viewName);
+                    metadataArr = db.GetMetadata(viewName);
+                }
+            }
+            if (qry != null)
+            {
+                qry = req.ToQueryable(qry, valueType, propArr);
+                byte[] buffer = null;
+                switch (format)
+                {
+                    case "xlsx":
+                        {
+                            using (var ms = new MemoryStream())
+                            {
+                                qry.ExportToExcel(valueType, metadataArr, ms);
+                                buffer = ms.ToArray();
+                            }
+
+                            return File(buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{viewName.ToHumanReadable()}.xlsx");
+                        }
+                    case "pdf":
+                        {
+                            // not implemented yet
+                            return NotFound();
+                        }
+                    case "csv":
+                    default:
+                        {
+                            using (var ms = new MemoryStream())
+                            {
+                                using (var sr = new StreamWriter(ms))
+                                {
+                                    qry.ExportToCSV(metadataArr, sr);
+                                }
+                                buffer = ms.ToArray();
+                            }
+                            return File(buffer, "text/csv", $"{viewName.ToHumanReadable()}.csv");
+                        }
+                }
+            }
+            return NotFound();
+        }
+
         [Route("/api/dyndata/{viewName}/list")]
         [HttpPost]
         public Task<PagingResult<dynamic>> GetList(string viewName, PagingRequest req)

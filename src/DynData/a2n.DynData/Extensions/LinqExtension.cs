@@ -192,5 +192,101 @@ namespace System.Linq
             return (Expression<Func<TSource, TKey>>)Expression.Lambda(body, param);
         }
 
+        public static void ExportToCSV(this IQueryable<object> query, Metadata[] metadataArr, StreamWriter writer)
+        {
+            bool firstField = true;
+            for (int i = 0; i < metadataArr.Length; i++)
+            {
+                var meta = metadataArr[i];
+                if (firstField)
+                    firstField = false;
+                else
+                    writer.Write(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+                writer.Write("\"{0}\"", meta.FieldLabel.Replace("\"", "\"\""));
+            }
+            writer.WriteLine();
+
+            // this method actually execute IDataReader
+            // no need to convert.. thx EF 6
+            foreach (var item in query)
+            {
+                firstField = true;
+                for (int i = 0; i < metadataArr.Length; i++)
+                {
+                    var meta = metadataArr[i];
+                    var pi = meta.PropertyInfo;
+                    var val = pi.GetValue(item, null);
+                    if (firstField)
+                        firstField = false;
+                    else
+                        writer.Write(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+                    if (val == null)
+                        writer.Write("\"\"");
+                    else
+                    {
+                        var txt = string.Empty;
+                        if (!string.IsNullOrEmpty(meta.DataFormatString))
+                            txt = string.Format(meta.DataFormatString, val);
+                        else
+                            txt = val.ToString();
+                        txt = txt.Replace("\r", string.Empty).Replace("\n", string.Empty).Replace("\"", "\"\"");
+                        writer.Write("\"{0}\"", txt);
+                    }
+                }
+                writer.WriteLine();
+            }
+        }
+
+        public static void ExportToCSV<T>(this IQueryable<T> query, StreamWriter writer)
+        {
+            var sytemProps = typeof(T).GetProperties().Where(t => t.PropertyType.Namespace == "System").ToArray();
+            bool firstField = true;
+            for (int i = 0; i < sytemProps.Length; i++)
+            {
+                var pi = sytemProps[i];
+                if (firstField)
+                    firstField = false;
+                else
+                    writer.Write(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+                writer.Write("\"{0}\"", pi.Name.ToHumanReadable());
+            }
+            writer.WriteLine();
+
+            // this method actually execute IDataReader
+            // no need to convert/use SqlDataReader.. thx EF 6
+            foreach (var item in query)
+            {
+                firstField = false;
+                for (int i = 0; i < sytemProps.Length; i++)
+                {
+                    var pi = sytemProps[i];
+                    var val = pi.GetValue(item, null);
+                    if (firstField)
+                        firstField = false;
+                    else
+                        writer.Write(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+                    if (val == null)
+                        writer.Write("\"\"");
+                    else
+                    {
+                        var txt = val.ToString();
+                        txt = txt.Replace("\r", string.Empty).Replace("\n", string.Empty).Replace("\"", "\"\"");
+                        writer.Write("\"{0}\"", txt);
+                    }
+                }
+                writer.WriteLine();
+            }
+        }
+
+        public static void ExportToExcel(this IQueryable<dynamic> query, Type valueType, Metadata[] metadataArr, Stream strm)
+        {
+            LiteExcelWriter xlWriter = new LiteExcelWriter();
+            xlWriter.Render(query, valueType, metadataArr, strm);
+        }
+        public static void ExportToExcel<T>(this IQueryable<T> query, Stream strm)
+        {
+            LiteExcelWriter xlWriter = new LiteExcelWriter();
+            xlWriter.Render(query, strm);
+        }
     }
 }

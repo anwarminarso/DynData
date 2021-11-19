@@ -484,30 +484,10 @@ namespace a2n.DynData
             foreach (var rule in rules)
                 rule.ValidatePropertyType(propArr);
             var whereExp = ExpressionBuilder.Build(tableType, rules);
+
+            
             return qry.Where(whereExp, tableType);
         }
 
-    }
-
-    public abstract class DynDbContextEventHandler
-    {
-        public virtual void OnMetaGenerated(Metadata meta)
-        {
-        }
-        public virtual bool OnBeforeCreate(DynDbContext db, Type valueType, object value)
-        {
-            return true;
-        }
-        public virtual bool OnBeforeUpdate(DynDbContext db, Type valueType, object originalValue, JObject valueToModified)
-        {
-            return true;
-        }
-        public virtual void OnAfterUpdate(DynDbContext db, Type valueType, object modifiedValue)
-        {
-        }
-        public virtual bool OnBeforeDelete(DynDbContext db, Type valueType, object value)
-        {
-            return true;
-        }
     }
 }
