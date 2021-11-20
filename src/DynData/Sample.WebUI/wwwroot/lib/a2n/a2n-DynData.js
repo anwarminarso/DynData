@@ -389,8 +389,8 @@ a2n.dyndata.DataTable.prototype = {
                 }
                 break;
             default:
-                if (this.onRowCommand) {
-                    this.onRowCommand(commandName, rowIndex, rowData);
+                if (this.dynOptions.onRowCommand) {
+                    this.dynOptions.onRowCommand(commandName, rowIndex, rowData);
                 }
                 break;
         }
