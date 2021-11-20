@@ -712,7 +712,7 @@ a2n.dyndata.Form.prototype = {
         }
         this._IsFormGenerated = true;
     },
-    LoadMetadata: function (controller, callback) {
+    LoadMetadata: function (controller, viewName, callback) {
         let _this = this;
         _this.controller = controller;
         _this.viewName = viewName;
