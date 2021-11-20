@@ -16,44 +16,44 @@
 
 a2n.dyndata = a2n.dyndata || {};
 a2n.dyndata.Configuration = {
-    API_METADATA: "/api/dyndata/${viewName}/metadata",
-    API_METADATAQB: "/api/dyndata/${viewName}/metadataQB",
-    API_DATATABLE: "/api/dyndata/${viewName}/datatable",
-    API_DATATABLE_EXPORT: "/api/dyndata/${viewName}/datatable/export",
-    API_LIST: "/api/dyndata/${viewName}/list",
-    API_DROPDOWN: "/api/dyndata/${viewName}/dropdown",
-    API_CREATE: "/api/dyndata/${viewName}/create",
-    API_READ: "/api/dyndata/${viewName}/read",
-    API_UPDATE: "/api/dyndata/${viewName}/update",
-    API_DELETE: "/api/dyndata/${viewName}/delete",
-    getApiMetadata: function (viewName) {
+    API_METADATA: "/dyndata/${controller}/${viewName}/metadata",
+    API_METADATAQB: "/dyndata/${controller}/${viewName}/metadataQB",
+    API_DATATABLE: "/dyndata/${controller}/${viewName}/datatable",
+    API_DATATABLE_EXPORT: "/dyndata/${controller}/${viewName}/datatable/export",
+    API_LIST: "/dyndata/${controller}/${viewName}/list",
+    API_DROPDOWN: "/dyndata/${controller}/${viewName}/dropdown",
+    API_CREATE: "/dyndata/${controller}/${viewName}/create",
+    API_READ: "/dyndata/${controller}/${viewName}/read",
+    API_UPDATE: "/dyndata/${controller}/${viewName}/update",
+    API_DELETE: "/dyndata/${controller}/${viewName}/delete",
+    getApiMetadata: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_METADATA + "`");
     },
-    getApiMetadataQB: function (viewName) {
+    getApiMetadataQB: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_METADATAQB + "`");
     },
-    getApiDataTable: function (viewName) {
+    getApiDataTable: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_DATATABLE + "`");
     },
-    getApiDataTableExport: function (viewName) {
+    getApiDataTableExport: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_DATATABLE_EXPORT + "`");
     },
-    getApiList: function (viewName) {
+    getApiList: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_LIST + "`");
     },
-    getApiDropDown: function (viewName) {
+    getApiDropDown: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_DROPDOWN + "`");
     },
-    getApiCreate: function (viewName) {
+    getApiCreate: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_CREATE + "`");
     },
-    getApiRead: function (viewName) {
+    getApiRead: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_READ + "`");
     },
-    getApiUpdate: function (viewName) {
+    getApiUpdate: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_UPDATE + "`");
     },
-    getApiDelete: function (viewName) {
+    getApiDelete: function (controller, viewName) {
         return eval("`" + a2n.dyndata.Configuration.API_DELETE + "`");
     }
 };
@@ -63,9 +63,10 @@ a2n.dyndata.Utils = {
     QBInstance: null,
     FormInstance: null
 }
-a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
+a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, options) {
     this.ID = tableId;
-    this.$el = $(element);
+    this.$el = $(parentElement);
+    this.controller = controller;
     this.viewName = viewName;
     this.dt = null;
     this.qbRuleSet = null;
@@ -97,7 +98,7 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
     if (this.dynOptions.allowDelete)
         this.dynOptions.rowCommandButtons.push({ commandName: 'Delete', title: 'Delete', btnCls: 'mr-2', iconCls: 'fa fa-trash-alt text-danger' });
 
-    let ajaxUrl = a2n.dyndata.Configuration.getApiDataTable(this.viewName);
+    let ajaxUrl = a2n.dyndata.Configuration.getApiDataTable(this.controller,this.viewName);
     a2n.dyndata.Utils.dtInstances[tableId] = this;
 
     let buttons = [];
@@ -110,7 +111,7 @@ a2n.dyndata.DataTable = function (tableId, element, viewName, options) {
             className: 'btn btn-warning btn-sm text-white',
             action: function (e, dt, node, config) {
                 let obj = a2n.dyndata.Utils.dtInstances[viewName];
-                a2n.dyndata.Utils.QBInstance.Show(viewName, obj.qbRuleSet, obj.dynOptions.queryBuilderOptions, function (ruleSet) {
+                a2n.dyndata.Utils.QBInstance.Show(controller, viewName, obj.qbRuleSet, obj.dynOptions.queryBuilderOptions, function (ruleSet) {
                     obj.qbRuleSet = ruleSet;
                     obj.dt.ajax.reload();
                 });
@@ -209,7 +210,7 @@ a2n.dyndata.DataTable.prototype = {
     LoadMetadata: function (render) {
         let _this = this;
         let _render = render;
-        let _apiMetaUrl = a2n.dyndata.Configuration.getApiMetadataQB(_this.viewName);
+        let _apiMetaUrl = a2n.dyndata.Configuration.getApiMetadataQB(_this.controller, _this.viewName);
         $.getJSON(_apiMetaUrl, function (result) {
             _this.dynOptions.metaData = result.metaData;
             _this.dynOptions.queryBuilderOptions = result.queryBuilderOptions;
@@ -295,8 +296,8 @@ a2n.dyndata.DataTable.prototype = {
                     let metaData = null;
                     if (_this.dynOptions.crudTableName == _this.viewName)
                         metaData = _this.dynOptions.metaData
-                    a2n.dyndata.Utils.FormInstance.Show(_this.dynOptions.crudTableName, "New", metaData, null, function (data) {
-                        let _apiCreateUrl = a2n.dyndata.Configuration.getApiCreate(_this.dynOptions.crudTableName);
+                    a2n.dyndata.Utils.FormInstance.Show(_this.controller, _this.dynOptions.crudTableName, "New", metaData, null, function (data) {
+                        let _apiCreateUrl = a2n.dyndata.Configuration.getApiCreate(_this.controller, _this.dynOptions.crudTableName);
                         a2n.submitAjaxJsonPost(_apiCreateUrl, JSON.stringify(data), function () {
                             _this.dt.ajax.reload();
                         });
@@ -360,8 +361,8 @@ a2n.dyndata.DataTable.prototype = {
         switch (commandName) {
             case "Edit":
                 {
-                    a2n.dyndata.Utils.FormInstance.Show(_this.dynOptions.crudTableName, "Edit", metaData, rowData, function (data) {
-                        let _apiUpdateUrl = a2n.dyndata.Configuration.getApiUpdate(_this.dynOptions.crudTableName);
+                    a2n.dyndata.Utils.FormInstance.Show(_this.controller,_this.dynOptions.crudTableName, "Edit", metaData, rowData, function (data) {
+                        let _apiUpdateUrl = a2n.dyndata.Configuration.getApiUpdate(_this.controller, _this.dynOptions.crudTableName);
                         a2n.submitAjaxJsonPost(_apiUpdateUrl, JSON.stringify(data), function () {
                             _this.dt.ajax.reload();
                         });
@@ -373,7 +374,7 @@ a2n.dyndata.DataTable.prototype = {
                     a2n.showConfirmDelete(
                         function (result) {
                             if (result) {
-                                let _apiDeleteUrl = a2n.dyndata.Configuration.getApiDelete(_this.dynOptions.crudTableName);
+                                let _apiDeleteUrl = a2n.dyndata.Configuration.getApiDelete(_this.controller, _this.dynOptions.crudTableName);
                                 a2n.submitAjaxJsonPost(_apiDeleteUrl, JSON.stringify(rowData), function () {
                                     _this.dt.ajax.reload();
                                 });
@@ -384,7 +385,7 @@ a2n.dyndata.DataTable.prototype = {
                 break;
             case "View":
                 {
-                    a2n.dyndata.Utils.FormInstance.Show(_this.viewName, "View", _this.dynOptions.metaData, rowData);
+                    a2n.dyndata.Utils.FormInstance.Show(_this.controller, _this.viewName, "View", _this.dynOptions.metaData, rowData);
                 }
                 break;
             default:
@@ -400,7 +401,7 @@ a2n.dyndata.DataTable.prototype = {
     },
     Export: function (format) {
         let req = { viewName: this.viewName, externalfilter: this.externalFilter };
-        let apiExportUrl = a2n.dyndata.Configuration.getApiDataTableExport(this.viewName);
+        let apiExportUrl = a2n.dyndata.Configuration.getApiDataTableExport(this.controller, this.viewName);
         req.globalSearch = this.dt.search();
         req.format = format;
         let order = this.dt.order();
@@ -533,6 +534,7 @@ a2n.dyndata.Form = function (options) {
 
 }
 a2n.dyndata.Form.prototype = {
+    controller: null,
     viewName: null,
     _IsRendered: false,
     _IsFormGenerated: false,
@@ -568,7 +570,7 @@ a2n.dyndata.Form.prototype = {
                     placeholder: `--- Select a ${meta.PrincipalLabel} ---`,
                     minimumInputLength: 2,
                     ajax: {
-                        url: a2n.dyndata.Configuration.getApiDropDown(meta.PrincipalName),
+                        url: a2n.dyndata.Configuration.getApiDropDown(this.controller, meta.PrincipalName),
                         type: "GET",
                         contentType: 'application/json',
                         data: function (params) {
@@ -710,10 +712,11 @@ a2n.dyndata.Form.prototype = {
         }
         this._IsFormGenerated = true;
     },
-    LoadMetadata: function (viewName, callback) {
+    LoadMetadata: function (controller, callback) {
         let _this = this;
+        _this.controller = controller;
         _this.viewName = viewName;
-        let _apiMetaUrl = a2n.dyndata.Configuration.getApiMetadata(_this.viewName);
+        let _apiMetaUrl = a2n.dyndata.Configuration.getApiMetadata(_this.controller, _this.viewName);
         $.getJSON(_apiMetaUrl, function (result) {
             _this.dynOptions.metaData = result.metaData;
             _this.dynOptions.hasPK = false;
@@ -788,13 +791,13 @@ a2n.dyndata.Form.prototype = {
             this._OnSubmit(data, this.dynOptions.viewName);
         $(`#mdl${this.ID}`).modal('hide');
     },
-    Show: function (viewName, formMode, metaData, data, OnSubmit) {
+    Show: function (controller, viewName, formMode, metaData, data, OnSubmit) {
         let _this = this;
         _this.Render();
         let reloadMetadata = false;
         let $container = $(`#container${_this.ID}`);
         let $frm = $(`#frm${_this.ID}`);
-        if (_this.viewName != viewName) {
+        if (_this.viewName != viewName || _this.controller != controller) {
             _this._IsFormGenerated = false;
             if (metaData)
                 _this.dynOptions.metaData = metaData;
@@ -809,18 +812,19 @@ a2n.dyndata.Form.prototype = {
         }
         if (reloadMetadata) {
             let _viewName = viewName;
+            let _controller = controller;
             let _formMode = formMode;
             let _metaData = metaData;
             let _data = data;
             let _OnSubmit = OnSubmit;
 
-            _this.LoadMetadata(viewName, function (cb) {
-                _this.viewName = _viewName;
-                _this.Show(viewName, _formMode, _metaData, _data, _OnSubmit);
+            _this.LoadMetadata(_controller, _viewName, function (cb) {
+                _this.Show(_controller, _viewName, _formMode, _metaData, _data, _OnSubmit);
             });
             return;
         }
         _this.viewName = viewName;
+        _this.controller = controller;
         _this._OnSubmit = OnSubmit;
         _this._FormMode = formMode;
         if (!_this._IsFormGenerated)
@@ -862,7 +866,7 @@ a2n.dyndata.Form.prototype = {
                 let principal = $select2.attr('data-principal');
                 let keyField = $select2.attr('data-keyfield');
                 let labelfield = $select2.attr('data-labelfield');
-                let apiReadUrl = a2n.dyndata.Configuration.getApiRead(principal);
+                let apiReadUrl = a2n.dyndata.Configuration.getApiRead(_this.controller, principal);
                 let keyData = {};
                 keyData[keyField] = val;
                 a2n.submitAjaxJsonPost(apiReadUrl, JSON.stringify(keyData), function (result) {

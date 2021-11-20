@@ -12,13 +12,13 @@ namespace Sample.WebUI.Pages
         private readonly AdventureWorksContext db;
         public readonly string[] AllTables;
 
-        public IndexModel(ILogger<IndexModel> logger, AdventureWorksContext db, QueryTemplateSettings qryTpl)
+        public IndexModel(ILogger<IndexModel> logger, AdventureWorksContext db, AdvWorkQueryTemplate qryTpl)
         {
             this.logger = logger;
             this.db = db;
             List<string> qryTblVwNameLst = new List<string>();
             qryTblVwNameLst.AddRange(db.GetAllTableViewNames());
-            qryTblVwNameLst.AddRange(qryTpl.GetAllQueryTemplateNames<AdventureWorksContext>());
+            qryTblVwNameLst.AddRange(qryTpl.GetQueryTemplateNames());
             AllTables = qryTblVwNameLst.ToArray();
         }
 

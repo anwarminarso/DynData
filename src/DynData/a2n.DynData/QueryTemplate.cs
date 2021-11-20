@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,15 +8,12 @@ using System.Reflection;
 
 namespace a2n.DynData
 {
-    public class QueryTemplate<T>
+    public abstract class QueryTemplate<T>
         where T : DbContext
     {
-        private Dictionary<string, QueryMeta<T>> dicQueryList;
+        private readonly Dictionary<string, QueryMeta<T>> dicQueryList = new Dictionary<string, QueryMeta<T>>();
+        private object lockObject = new object();
 
-        public QueryTemplate()
-        {
-            dicQueryList = new Dictionary<string, QueryMeta<T>>();
-        }
         public string[] GetQueryTemplateNames()
         {
             return dicQueryList.Keys.ToArray();
@@ -95,6 +93,64 @@ namespace a2n.DynData
         public Type GetCRUDTableType(string QueryName)
         {
             return dicQueryList[QueryName].GetCRUDTableType();
+        }
+
+        public dynamic FindByKey(T db, string QueryName, string jsonKeyValues)
+        {
+            var jKey = JObject.Parse(jsonKeyValues);
+            return FindByKey(db, QueryName, jKey);
+        }
+        public dynamic FindByKey(T db, string QueryName, System.Text.Json.JsonElement keyValues)
+        {
+            var jKey = JObject.Parse(keyValues.ToString());
+            return FindByKey(db, QueryName, jKey);
+        }
+        public dynamic FindByKey(T db, string QueryName, JObject jKey)
+        {
+            ExpressionRule rootRule = new ExpressionRule() { IsBracket = true, LogicalOperator = ExpressionLogicalOperator.And };
+            var valueType = this.GetValueType(db, QueryName);
+            var metaArr = this.GetMetadata(db, QueryName);
+            var pkValues = metaArr.Where(t => t.IsPrimaryKey && jKey.ContainsKey(t.FieldName)).Select(t => new { Type = t.PropertyInfo.PropertyType, Name = t.FieldName, Value = jKey[t.FieldName] }).ToArray();
+            if (pkValues.Length == 0)
+                return null;
+            var qry = this.GetQuery(db, QueryName);
+            foreach (var pk in pkValues)
+            {
+                rootRule.AddChild(new ExpressionRule()
+                {
+                    IsBracket = false,
+                    LogicalOperator = ExpressionLogicalOperator.And,
+                    Operator = ExpressionOperator.Equal,
+                    ReferenceFieldName = pk.Name,
+                    ReferenceFieldType = pk.Type,
+                    CompareFieldValue = pk.Value.ToString()
+                });
+            }
+            var whereExp = ExpressionBuilder.Build(valueType, rootRule);
+            if (whereExp != null)
+                return qry.Where(whereExp, valueType).FirstOrDefault();
+            else
+                return null;
+        }
+
+        public IQueryable<dynamic> GetQuery(T db, string QueryName, params ExpressionRule[] rules)
+        {
+            if (HasQueryName(QueryName))
+            {
+                var qry = GetQuery(db, QueryName);
+                var viewType = GetValueType(db, QueryName);
+                if (rules != null && rules.Length > 0)
+                {
+                    foreach (var rule in rules)
+                        rule.ValidatePropertyType(viewType);
+                    var whereExp = ExpressionBuilder.Build(viewType, rules);
+                    return qry.Where(whereExp, viewType);
+                }
+                else
+                    return qry;
+            }
+            else
+                return null;
         }
 
     }

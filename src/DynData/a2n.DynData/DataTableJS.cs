@@ -164,7 +164,7 @@ namespace a2n.DynData
                 bool ascending = true;
                 if (!string.IsNullOrEmpty(this.order[0].dir) && this.order[0].dir != "asc")
                     ascending = false;
-                qry = qry.OrderBy(ColOrderBy, ascending) as IQueryable<T>;
+                qry = qry.OrderBy(ColOrderBy, ascending);
                 if (order.Length > 1)
                 {
                     for (int i = 1; i < order.Length; i++)
@@ -358,7 +358,7 @@ namespace a2n.DynData
                 };
                 foreach (var meta in metaArr)
                 {
-                    if (!meta.IsOrderable)
+                    if (!meta.IsOrderable || !meta.IsSearchable)
                         continue;
                     if (meta.PropertyInfo.PropertyType == typeof(String))
                     {

@@ -10,16 +10,16 @@ using a2n.DynData;
 
 namespace Sample.WebUI.Configuration
 {
-    public class QueryTemplateSettings : BaseQueryTemplateSettings
+
+    public class AdvWorkQueryTemplate : QueryTemplate<AdventureWorksContext>
     {
-        public QueryTemplateSettings()
+        public AdvWorkQueryTemplate()
         {
-            #region Register View Query for AdventureWorksContext
-            var Template = new QueryTemplate<AdventureWorksContext>();
+            //Register View Query for AdventureWorksContext
 
-
-            // dari view vSalesPerson di db dijadikan linq query
-            Template.AddQuery("IniQueryTemplate_vSalesPerson", 
+            // contoh dari view vSalesPerson di database, dijadikan linq query
+            // dengan default crudnya ke table SalesPerson
+            AddQuery("IniQueryTemplate_vSalesPerson",
                 typeof(SalesPerson),
                 db =>
                 {
@@ -67,34 +67,6 @@ namespace Sample.WebUI.Configuration
                         meta.IsPrimaryKey = true;
                 }
             );
-
-
-            //Template.AddQuery("UserRoles", db =>
-            //{
-            //    var qry = (from ur in db.SysUserRoles
-            //               join r in db.SysRoles on ur.RoleId equals r.Id
-            //               join u in db.SysUsers on ur.UserId equals u.Id
-            //               select new
-            //               {
-            //                   ur.UserId,
-            //                   u.UserName,
-            //                   u.Email,
-            //                   ur.RoleId,
-            //                   RoleName = r.Name
-            //               });
-
-            //    return qry;
-            //},
-            //        new Metadata() { FieldName = "UserId", FieldType = "Sting", FieldLabel = "User Id", CustomAttributes = new { Hidden = true } },
-            //        new Metadata() { FieldName = "UserName", FieldType = "Sting", FieldLabel = "User Name" },
-            //        new Metadata() { FieldName = "Email", FieldType = "Sting", FieldLabel = "Email" },
-            //        new Metadata() { FieldName = "RoleId", FieldType = "Sting", FieldLabel = "Role Id", CustomAttributes = new { Hidden = true } },
-            //        new Metadata() { FieldName = "RoleName", FieldType = "DateTime", FieldLabel = "Role Name" }
-            //    );
-
-            this.AddTemplate(Template);
-            #endregion
-
         }
     }
 }

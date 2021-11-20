@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
 using Sample.WebUI.Configuration;
 using Sample.DataAccess;
+using a2n.DynData;
 
 namespace Sample.WebUI
 {
@@ -23,7 +24,6 @@ namespace Sample.WebUI
             var settings = new AppSettings();
             Configuration.Bind("AppSettings", settings);
             services.AddSingleton<AppSettings>(settings);
-
             AdventureWorksContext.Open(settings.DBConnectionSetting, db =>
             {
                 Console.WriteLine("Checking Database...");
@@ -48,7 +48,6 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
                 // with custom event handler
                 o.UseDynData(settings.DBConnectionSetting, new EventHandlers.AdventureWorksContextHandler());
             });
-            services.AddSingleton<QueryTemplateSettings>();
             #region Compression
             services.Configure<GzipCompressionProviderOptions>(options =>
             {
@@ -93,13 +92,17 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
             {
                 c.RootDirectory = "/Pages";
             });
+
+
+            // Important!!!
             pages.AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null; // remove auto camelcase
             });
 
-            services.AddCors();
 
+            // enable DynData API
+            services.AddDynDataApi<AdventureWorksContext, AdvWorkQueryTemplate>("adv");
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, AppSettings settings)
         {
