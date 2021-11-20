@@ -111,7 +111,7 @@ a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, 
             className: 'btn btn-warning btn-sm text-white',
             action: function (e, dt, node, config) {
                 let obj = a2n.dyndata.Utils.dtInstances[viewName];
-                a2n.dyndata.Utils.QBInstance.Show(controller, viewName, obj.qbRuleSet, obj.dynOptions.queryBuilderOptions, function (ruleSet) {
+                a2n.dyndata.Utils.QBInstance.Show(viewName, obj.qbRuleSet, obj.dynOptions.queryBuilderOptions, function (ruleSet) {
                     obj.qbRuleSet = ruleSet;
                     obj.dt.ajax.reload();
                 });
