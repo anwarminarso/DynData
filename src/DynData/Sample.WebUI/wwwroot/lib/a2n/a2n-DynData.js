@@ -398,6 +398,7 @@ a2n.dyndata.DataTable.prototype = {
     LoadData: function () {
         if (!this._IsRendered)
             this.Render();
+        this.dt.ajax.reload();
     },
     Export: function (format) {
         let req = { viewName: this.viewName, externalfilter: this.externalFilter };
