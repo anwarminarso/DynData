@@ -146,6 +146,9 @@
                         $input.change();
                     }
                 }
+                else if ($input.is('textarea')) {
+                    $input.val(data[propName]);
+                }
                 else if ($input.is('select')) {
                     $input.val(data[propName]);
                     $input.change();
