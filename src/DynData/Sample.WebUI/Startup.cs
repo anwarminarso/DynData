@@ -102,7 +102,8 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
 
 
             // enable DynData API
-            services.AddDynDataApi<AdventureWorksContext, AdvWorkQueryTemplate>("adv");
+            //services.AddDynDataApi<AdventureWorksContext>("tableOnly"); // without query template ==> api path /dyndata/tableOnly/...
+            services.AddDynDataApi<AdventureWorksContext, AdvWorkQueryTemplate>("adv"); // with query template ==> api path /dyndata/adv/...
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, AppSettings settings)
         {
