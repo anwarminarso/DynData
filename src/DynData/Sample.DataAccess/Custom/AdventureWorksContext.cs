@@ -4018,7 +4018,6 @@ namespace Sample.DataAccess
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            OnModelCreatingPartial(modelBuilder);
         }
     }
 }

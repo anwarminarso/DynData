@@ -269,13 +269,21 @@ a2n.dyndata.DataTable.prototype = {
             let actionRenderer = "";
             for (let i = 0; i < _this.dynOptions.rowCommandButtons.length; i++) {
                 let btn = _this.dynOptions.rowCommandButtons[i];
+                if (btn.renderTemplate) {
+                    actionRenderer += btn.renderTemplate;
+                    continue;
+                }
                 let btnCls = 'btn btn-primary rounded-circle';
                 if (btn.btnCls)
                     btnCls = btn.btnCls;
-                let btnEl = `<a class="${btnCls}" href="#" onclick="a2n.dyndata.Utils.dtInstances.${_this.ID}.RowCommand('${btn.commandName}', METAROWCODE)" title="${btn.title}"><i class="${btn.iconCls}"></i></a>`;
+                let btnEl = `<a class="${btnCls}" href="#" onclick="a2n.dyndata.Utils.dtInstances.${_this.ID}.RowCommand('${btn.commandName}', METAROWCODE)" title="${btn.title}" ${btn.visibleHandler !== undefined ? "VISIBLEHANDLER" : ''}><i class="${btn.iconCls}"></i></a>`;
+
+                btnEl = btnEl.replace(new RegExp("METAROWCODE", 'g'), "${meta.row}");
+                if (btn.visibleHandler) {
+                    btnEl = btnEl.replace(new RegExp("VISIBLEHANDLER", 'g'), "${" + `${btn.visibleHandler}` + " ? '' : 'style=\"display: none;\"'}");
+                }
                 actionRenderer += btnEl;
             }
-            actionRenderer = actionRenderer.replace(new RegExp("METAROWCODE", 'g'), "${meta.row}");
             columnDefs.push({
                 targets: columns.length,
                 data: null,
