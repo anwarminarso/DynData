@@ -12,6 +12,8 @@ namespace a2n.DynData
 {
     public abstract class DynDbContext : DbContext
     {
+        public event EventHandler<EventArgs> OnMetadataPopulated;
+
         private DynDbContextEventHandler Handler;
         private static object lockObj = new object();
 
@@ -29,6 +31,8 @@ namespace a2n.DynData
         public DynDbContext(DatabaseServer DBSetting)
         {
             this.DBSetting = DBSetting;
+            var opt = new DynDataNetOptionsExtension();
+            opt.DBSetting = DBSetting;
         }
         protected DynDbContext(DbContextOptions options)
             : base(options)
@@ -43,9 +47,9 @@ namespace a2n.DynData
 
         public void PopulateMetadata()
         {
+            var dbCtxtType = this.GetType();
             lock (lockObj)
             {
-                var dbCtxtType = this.GetType();
                 if (dicTables.ContainsKey(dbCtxtType))
                     return;
                 var tableTypes = new Dictionary<string, Type>();
@@ -72,6 +76,7 @@ namespace a2n.DynData
                 dicTables.Add(dbCtxtType, tableTypes);
                 dicMetadata.Add(dbCtxtType, metadataTypes);
             }
+            OnMetadataPopulated?.Invoke(this, new EventArgs());
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -233,22 +238,10 @@ namespace a2n.DynData
         public Microsoft.EntityFrameworkCore.Metadata.IEntityType GetEntityType<T>()
             where T : class, new()
         {
-            //return this.Entry<T>(Activator.CreateInstance<T>()).Metadata;
             return this.Model.FindEntityType(typeof(T));
-            //if (mtdEntryWithoutDetectChanges == null)
-            //{
-            //    var mtds = typeof(DbContext).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic);
-            //    mtdEntryWithoutDetectChanges = mtds.Where(t => t.Name == "EntryWithoutDetectChanges" && t.IsGenericMethod == true).FirstOrDefault();
-            //}
-            //var obj = Activator.CreateInstance<T>();
-            //var mtd = mtdEntryWithoutDetectChanges.MakeGenericMethod(typeof(T));
-            //var entry = mtd.Invoke(this, new object[] { obj }) as Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<T>;
-            //return entry.Metadata;
         }
         public Microsoft.EntityFrameworkCore.Metadata.IEntityType GetEntityType(Type tableType)
         {
-            //var mtd = this.GetType().GetMethod("GetEntityType", new Type[] { }).MakeGenericMethod(tableType);
-            //return mtd.Invoke(this, null) as Microsoft.EntityFrameworkCore.Metadata.IEntityType;
             return this.Model.FindEntityType(tableType);
         }
 
@@ -484,7 +477,7 @@ namespace a2n.DynData
                 rule.ValidatePropertyType(propArr);
             var whereExp = ExpressionBuilder.Build(tableType, rules);
 
-            
+
             return qry.Where(whereExp, tableType);
         }
 
