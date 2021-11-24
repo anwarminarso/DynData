@@ -72,7 +72,16 @@ namespace a2n.DynData
                 this.FieldType = pi.PropertyType.Name;
                 this.IsNullable = false;
             }
-            this.FieldLabel = pi.Name.ToHumanReadable();
+            var attr = pi.GetCustomAttribute(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), true);
+            if (attr == null)
+                this.FieldLabel = pi.Name.ToHumanReadable();
+            else
+            {
+                this.FieldLabel = ((System.ComponentModel.DataAnnotations.DisplayAttribute)attr).Name;
+                if (string.IsNullOrEmpty(this.FieldLabel))
+                    this.FieldLabel = pi.Name.ToHumanReadable();
+            }
+
             this.PropertyInfo = pi;
             var pType = pi.PropertyType;
             if (pType == typeof(byte[]))
@@ -95,10 +104,18 @@ namespace a2n.DynData
             if (pi != null)
             {
                 pType = Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType;
+                var attr = pi.GetCustomAttribute(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), true);
                 this.PropertyInfo = pi;
                 this.FieldName = pi.Name;
                 this.FieldType = pType.Name;
-                this.FieldLabel = pi.Name.ToHumanReadable();
+                if (attr == null)
+                    this.FieldLabel = pi.Name.ToHumanReadable();
+                else
+                {
+                    this.FieldLabel = ((System.ComponentModel.DataAnnotations.DisplayAttribute)attr).Name;
+                    if (string.IsNullOrEmpty(this.FieldLabel))
+                        this.FieldLabel = pi.Name.ToHumanReadable();
+                }
                 switch (columnType)
                 {
                     case "binary":
