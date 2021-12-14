@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -242,6 +243,7 @@ namespace a2n.DynData
 
         [JsonConverter(typeof(StringEnumConverter))]
         [SysJsonSerial.JsonConverter(typeof(SysJsonSerial.JsonStringEnumConverter))]
+        [EnumDataType(typeof(ExpressionLogicalOperator))]
         public ExpressionLogicalOperator LogicalOperator { get; set; }
 
         [JsonIgnore]
@@ -268,10 +270,12 @@ namespace a2n.DynData
         public string ReferenceFieldName { get; set; }
 
         [JsonIgnore]
+        [SysJsonSerial.JsonIgnore()]
         public Type ReferenceFieldType { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
         [SysJsonSerial.JsonConverter(typeof(SysJsonSerial.JsonStringEnumConverter))]
+        [EnumDataType(typeof(ExpressionOperator))]
         public ExpressionOperator Operator { get; set; }
 
         public void AddChild(ExpressionRule value)

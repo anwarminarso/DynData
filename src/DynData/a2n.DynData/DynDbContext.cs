@@ -14,7 +14,7 @@ namespace a2n.DynData
     {
         public event EventHandler<EventArgs> OnMetadataPopulated;
 
-        private DynDbContextEventHandler Handler;
+        internal DynDbContextEventHandler Handler;
         private static object lockObj = new object();
 
         private static readonly Dictionary<Type, Dictionary<string, Type>> dicTables;

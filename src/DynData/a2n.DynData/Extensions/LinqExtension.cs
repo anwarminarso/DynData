@@ -17,6 +17,7 @@ namespace System.Linq
         private static MethodInfo mtdCreateExpression = null;
         private static MethodInfo mtdCreateSelectExpression = null;
 
+        private static MethodInfo mtdQueryableSelectByGeneric = null;
         private static MethodInfo mtdQueryableOrderByGeneric = null;
         private static MethodInfo mtdQueryableOrderByDescGeneric = null;
         private static MethodInfo mtdQueryableThenByGeneric = null;
@@ -30,6 +31,11 @@ namespace System.Linq
             mtdCreateExpression = typeof(LinqExtension).GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).Where(t => t.Name == "CreateExpression" && t.IsGenericMethod).FirstOrDefault();
             mtdCreateSelectExpression = typeof(LinqExtension).GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).Where(t => t.Name == "CreateSelectExpression" && t.IsGenericMethod).FirstOrDefault();
 
+
+            mtdQueryableSelectByGeneric = typeof(Queryable).GetMethods()
+                    .Where(t => t.Name == "Select" 
+                            && t.ToString() == "System.Linq.IQueryable`1[TResult] Select[TSource,TResult](System.Linq.IQueryable`1[TSource], System.Linq.Expressions.Expression`1[System.Func`2[TSource,TResult]])")
+                    .FirstOrDefault();
             mtdQueryableOrderByGeneric = typeof(Queryable).GetMethods().Where(t => t.Name == "OrderBy" && t.GetParameters().Length == 2).FirstOrDefault();
             mtdQueryableOrderByDescGeneric = typeof(Queryable).GetMethods().Where(t => t.Name == "OrderByDescending" && t.GetParameters().Length == 2).FirstOrDefault();
             mtdQueryableThenByGeneric = typeof(Queryable).GetMethods().Where(t => t.Name == "ThenBy" && t.GetParameters().Length == 2).FirstOrDefault();
@@ -142,15 +148,16 @@ namespace System.Linq
         public static IQueryable<object> Select(this IQueryable<object> query, Type sourceType, params string[] fieldNames)
         {
             var mtd = mtdCreateSelectExpression.MakeGenericMethod(sourceType);
-            var selector = mtd.Invoke(null, new object[] { fieldNames }) as Expression<Func<object, object>>;
-            return query.Select(selector);
+            var selectorObj = mtd.Invoke(null, new object[] { fieldNames });
+            mtd = mtdQueryableSelectByGeneric.MakeGenericMethod(sourceType, typeof(object));
+            return mtd.Invoke(null, new object[] { query, selectorObj }) as IQueryable<object>;
         }
         private static Expression<Func<T, dynamic>> CreateSelectExpression<T>(params string[] fieldNames)
         {
             if (fieldNames == null || fieldNames.Length == 0)
                 throw new ArgumentNullException(nameof(fieldNames));
             Type sourceType = typeof(T);
-            Type outputType = null; 
+            //Type outputType = null; 
             var _fieldNameDist = fieldNames.Distinct().ToArray();
             string[] _fieldNames = fieldNames;
             if (fieldNames.Length != _fieldNameDist.Length)
