@@ -470,7 +470,7 @@ namespace a2n.DynData
                 throw new Exception($"Table {tableName} not found");
             var propArr = GetProperties(tableName);
             var qry = GetQueryable(tableType);
-            if (rules == null || rules.Length == 0)
+            if (rules == null || rules.Length == 0 || (rules.Length == 1 && rules[0] == null))
                 return qry;
 
             foreach (var rule in rules)
