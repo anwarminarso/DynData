@@ -33,5 +33,9 @@ namespace Sample.WebUI.EventHandlers
             var ctxt = db as AdventureWorksContext;
 
         }
+        public override void OnExport(string format, string viewName, Type valueType, Metadata[] metadataArr, IQueryable<dynamic> qry, out byte[] buffer, out string mimeType, out string fileName)
+        {
+            base.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+        }
     }
 }

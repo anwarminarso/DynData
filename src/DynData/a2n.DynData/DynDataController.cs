@@ -64,6 +64,8 @@ namespace a2n.DynData
             string format = string.Empty;
             if (string.IsNullOrEmpty(req.format))
                 format = "csv";
+            else
+                format = req.format;
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
@@ -304,15 +306,16 @@ namespace a2n.DynData
         [HttpPost]
         public virtual IActionResult ExportDataTable(string viewName, [FromForm] DataTableJSExportRequest req)
         {
-            IQueryable<dynamic> qry = null;
-            Type valueType = null;
-            Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
             string format = string.Empty;
             if (string.IsNullOrEmpty(req.format))
                 format = "csv";
             else
-                format = req.format.ToLower();
+                format = req.format;
+            IQueryable<dynamic> qry = null;
+            Type valueType = null;
+            Metadata[] metadataArr = null;
+            PropertyInfo[] propArr = null;
+
             if (qryTpl.HasQueryName(viewName))
             {
                 qry = qryTpl.GetQuery(db, viewName);
@@ -333,40 +336,20 @@ namespace a2n.DynData
             {
                 qry = req.ToQueryable(qry, valueType, metadataArr);
                 byte[] buffer = null;
-                switch (format)
-                {
-                    case "xlsx":
-                        {
-                            using (var ms = new MemoryStream())
-                            {
-                                qry.ExportToExcel(valueType, metadataArr, ms);
-                                buffer = ms.ToArray();
-                            }
-
-                            return File(buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{viewName.ToHumanReadable()}.xlsx");
-                        }
-                    case "pdf":
-                        {
-                            //not implemented
-                            //coming soon
-                            return NotFound();
-                        }
-                    case "csv":
-                    default:
-                        {
-                            using (var ms = new MemoryStream())
-                            {
-                                using (var sr = new StreamWriter(ms))
-                                {
-                                    qry.ExportToCSV(metadataArr, sr);
-                                }
-                                buffer = ms.ToArray();
-                            }
-                            return File(buffer, "text/csv", $"{viewName.ToHumanReadable()}.csv");
-                        }
-                }
+                string fileName = string.Empty;
+                string mimeType = string.Empty;
+                format = format.ToLower();
+                if (db.Handler != null)
+                    db.Handler.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+                else
+                    DefaultExport.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+                if (buffer != null)
+                    return File(buffer, mimeType, fileName);
+                else
+                    return NotFound();
             }
             return NotFound();
+
         }
 
         [Route("{viewName}/list")]

@@ -14,7 +14,6 @@ namespace a2n.DynData
     {
         public event EventHandler<EventArgs> OnMetadataPopulated;
 
-        internal DynDbContextEventHandler Handler;
         private static object lockObj = new object();
 
         private static readonly Dictionary<Type, Dictionary<string, Type>> dicTables;
@@ -24,6 +23,7 @@ namespace a2n.DynData
 
         public DatabaseServer DBSetting { get; set; }
         public ServerVersion MySqlVersion { get; set; }
+        public DynDbContextEventHandler Handler { get; internal set; }
 
         public DynDbContext()
         {
@@ -37,6 +37,12 @@ namespace a2n.DynData
         protected DynDbContext(DbContextOptions options)
             : base(options)
         {
+            var ext = options.FindExtension<DynDataNetOptionsExtension>();
+            if (ext != null)
+            {
+                this.Handler = ext.Handler;
+                this.DBSetting = ext.DBSetting;
+            }
         }
 
         static DynDbContext()
