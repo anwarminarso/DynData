@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Sample.WebUI.Configuration;
 using Sample.DataAccess;
 using a2n.DynData;
+using Newtonsoft.Json;
+
 
 namespace Sample.WebUI
 {
@@ -93,13 +95,15 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
                 c.RootDirectory = "/Pages";
             });
 
-
             // Important!!!
-            pages.AddJsonOptions(options =>
+            //pages.AddJsonOptions(options =>
+            //{
+            //    options.JsonSerializerOptions.PropertyNamingPolicy = null; // remove auto camelcase
+            //});
+            pages.AddNewtonsoftJson(x =>
             {
-                options.JsonSerializerOptions.PropertyNamingPolicy = null; // remove auto camelcase
+                x.UseMemberCasing();
             });
-
 
             // enable DynData API
             //services.AddDynDataApi<AdventureWorksContext>("tableOnly"); // without query template ==> api path /dyndata/tableOnly/...
