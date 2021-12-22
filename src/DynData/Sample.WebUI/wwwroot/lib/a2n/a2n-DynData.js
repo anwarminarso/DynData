@@ -252,6 +252,7 @@ a2n.dyndata.DataTable.prototype = {
         let $row = $tbl.find('tr');
         let columns = [];
         let columnDefs = [];
+        let currentUrl = document.URL;
         for (let i = 0; i < _this.dynOptions.metaData.length; i++) {
             let data = _this.dynOptions.metaData[i];
             if (data.CustomAttributes) {
@@ -276,7 +277,7 @@ a2n.dyndata.DataTable.prototype = {
                 let btnCls = 'btn btn-primary rounded-circle';
                 if (btn.btnCls)
                     btnCls = btn.btnCls;
-                let btnEl = `<a class="${btnCls}" href="#" onclick="a2n.dyndata.Utils.dtInstances.${_this.ID}.RowCommand('${btn.commandName}', METAROWCODE)" title="${btn.title}" ${btn.visibleHandler !== undefined ? "VISIBLEHANDLER" : ''}><i class="${btn.iconCls}"></i></a>`;
+                let btnEl = `<a class="${btnCls}" href="${currentUrl}#" onclick="a2n.dyndata.Utils.dtInstances.${_this.ID}.RowCommand('${btn.commandName}', METAROWCODE)" title="${btn.title}" ${btn.visibleHandler !== undefined ? "VISIBLEHANDLER" : ''}><i class="${btn.iconCls}"></i></a>`;
 
                 btnEl = btnEl.replace(new RegExp("METAROWCODE", 'g'), "${meta.row}");
                 if (btn.visibleHandler) {
