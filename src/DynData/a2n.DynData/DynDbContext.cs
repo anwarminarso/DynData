@@ -66,7 +66,7 @@ namespace a2n.DynData
                 {
                     tableTypes.Add(tableType.Name.ToString(), tableType);
                     var meta = GetEntityType(tableType);
-                    var metaProps = meta.GetProperties();
+                    var metaProps = meta.GetProperties().OrderBy(t => t.GetColumnOrder());
                     List<Metadata> metadataLst = new List<Metadata>();
                     foreach (var p in metaProps)
                     {
