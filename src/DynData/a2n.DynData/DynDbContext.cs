@@ -66,14 +66,20 @@ namespace a2n.DynData
                 {
                     tableTypes.Add(tableType.Name.ToString(), tableType);
                     var meta = GetEntityType(tableType);
-                    var metaProps = meta.GetProperties().OrderBy(t => t.GetColumnOrder());
+                    var metaProps = meta.GetProperties();
+                    var propArr = tableType.GetProperties();
+
                     List<Metadata> metadataLst = new List<Metadata>();
-                    foreach (var p in metaProps)
+                    foreach (var p in propArr)
                     {
-                        if (Handler != null)
-                            metadataLst.Add(new Metadata(p, Handler.OnMetaGenerated));
-                        else
-                            metadataLst.Add(new Metadata(p));
+                        var mProp = metaProps.Where(t => t.PropertyInfo == p).FirstOrDefault();
+                        if (mProp != null)
+                        {
+                            if (Handler != null)
+                                metadataLst.Add(new Metadata(p, Handler.OnMetaGenerated));
+                            else
+                                metadataLst.Add(new Metadata(p));
+                        }
                     }
                     metadataTypes.Add(tableType.Name.ToString(), metadataLst.ToArray());
                 }
