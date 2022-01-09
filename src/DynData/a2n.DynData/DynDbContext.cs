@@ -76,6 +76,13 @@ namespace a2n.DynData
                         if (mProp != null)
                         {
                             if (Handler != null)
+                                metadataLst.Add(new Metadata(mProp, Handler.OnMetaGenerated));
+                            else
+                                metadataLst.Add(new Metadata(mProp));
+                        }
+                        else
+                        {
+                            if (Handler != null)
                                 metadataLst.Add(new Metadata(p, Handler.OnMetaGenerated));
                             else
                                 metadataLst.Add(new Metadata(p));
