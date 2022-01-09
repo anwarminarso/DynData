@@ -80,13 +80,6 @@ namespace a2n.DynData
                             else
                                 metadataLst.Add(new Metadata(mProp));
                         }
-                        else
-                        {
-                            if (Handler != null)
-                                metadataLst.Add(new Metadata(p, Handler.OnMetaGenerated));
-                            else
-                                metadataLst.Add(new Metadata(p));
-                        }
                     }
                     metadataTypes.Add(tableType.Name.ToString(), metadataLst.ToArray());
                 }
