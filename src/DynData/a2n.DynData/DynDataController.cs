@@ -28,6 +28,18 @@ namespace a2n.DynData
             this.db = db;
         }
 
+
+        [Route("viewNames")]
+        [HttpPost]
+        public virtual Task<string[]> GetAllViewNames()
+        {
+            return Task.Run(() =>
+            {
+                return db.GetAllTableViewNames().OrderBy(t => t).ToArray();
+            });
+        }
+
+
         [Route("{viewName}/datatable")]
         [HttpPost]
         public virtual Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
@@ -263,6 +275,18 @@ namespace a2n.DynData
             this.logger = logger;
             this.db = db;
             this.qryTpl = qryTpl;
+        }
+
+        [Route("viewNames")]
+        [HttpPost]
+        public virtual Task<string[]> GetAllViewNames()
+        {
+            return Task.Run(() =>
+            {
+                var tableNames = db.GetAllTableViewNames();
+                var tplNames = qryTpl.GetQueryTemplateNames();
+                return tableNames.Union(tplNames).OrderBy(t => t).ToArray();
+            });
         }
 
         [Route("{viewName}/datatable")]
