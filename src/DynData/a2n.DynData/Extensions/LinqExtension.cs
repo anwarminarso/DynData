@@ -97,16 +97,17 @@ namespace System.Linq
         {
             if (string.IsNullOrWhiteSpace(key))
                 return query;
-            var propertyType = typeof(TSource).GetProperty(key).PropertyType;
-            var fun = CreateExpression(typeof(TSource), propertyType, key);
+            var elementType = query.ElementType;
+            var propertyType = elementType.GetProperty(key).PropertyType;
+            var fun = CreateExpression(elementType, propertyType, key);
             MethodInfo mtd = null;
             if (ascending)
             {
-                mtd = mtdQueryableOrderByGeneric.MakeGenericMethod(typeof(TSource), propertyType);
+                mtd = mtdQueryableOrderByGeneric.MakeGenericMethod(elementType, propertyType);
             }
             else
             {
-                mtd = mtdQueryableOrderByDescGeneric.MakeGenericMethod(typeof(TSource), propertyType);
+                mtd = mtdQueryableOrderByDescGeneric.MakeGenericMethod(elementType, propertyType);
             }
             return mtd.Invoke(null, new object[] { query, fun }) as IQueryable<TSource>;
         }
@@ -120,16 +121,17 @@ namespace System.Linq
         {
             if (string.IsNullOrWhiteSpace(key))
                 return query;
-            var propertyType = typeof(TSource).GetProperty(key).PropertyType;
-            var fun = CreateExpression(typeof(TSource), propertyType, key);
+            var elementType = query.ElementType;
+            var propertyType = elementType.GetProperty(key).PropertyType;
+            var fun = CreateExpression(elementType, propertyType, key);
             MethodInfo mtd = null;
             if (ascending)
             {
-                mtd = mtdQueryableThenByGeneric.MakeGenericMethod(typeof(TSource), propertyType);
+                mtd = mtdQueryableThenByGeneric.MakeGenericMethod(elementType, propertyType);
             }
             else
             {
-                mtd = mtdQueryableThenByDescGeneric.MakeGenericMethod(typeof(TSource), propertyType);
+                mtd = mtdQueryableThenByDescGeneric.MakeGenericMethod(elementType, propertyType);
             }
             return mtd.Invoke(null, new object[] { query, fun }) as IQueryable<TSource>;
         }

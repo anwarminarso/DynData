@@ -10,10 +10,10 @@ using SysJsonSerial = System.Text.Json.Serialization;
 #nullable disable
 namespace a2n.DynData
 {
-    public class PagingRequest
+
+    public class ExportRequest
     {
-        public int pageIndex { get; set; } = 0;
-        public int pageSize { get; set; } = 20;
+        public string format { get; set; } = "csv";
 
         [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -31,6 +31,4 @@ namespace a2n.DynData
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public object userContext { get; set; } = null;
     }
-
-
 }

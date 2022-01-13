@@ -31,6 +31,7 @@ namespace a2n.DynData
 
         [Route("viewNames")]
         [HttpPost]
+        [HttpGet]
         public virtual Task<string[]> GetAllViewNames()
         {
             return Task.Run(() =>
@@ -131,6 +132,49 @@ namespace a2n.DynData
             });
         }
 
+        [Route("{viewName}/export")]
+        [HttpPost]
+        public virtual IActionResult Export(string viewName, ExportRequest req)
+        {
+            string format = string.Empty;
+            if (string.IsNullOrEmpty(req.format))
+                format = "csv";
+            else
+                format = req.format;
+            IQueryable<dynamic> qry = null;
+            Type valueType = null;
+            Metadata[] metadataArr = null;
+            PropertyInfo[] propArr = null;
+
+            valueType = db.GetTableType(viewName);
+            if (valueType != null)
+            {
+                qry = db.Query(viewName, req.rules) as IQueryable<dynamic>;
+                propArr = db.GetProperties(viewName);
+                metadataArr = db.GetMetadata(viewName);
+            }
+            if (qry != null)
+            {
+                if (!string.IsNullOrEmpty(req.orderBy))
+                {
+                    var asc = req.ascending.HasValue ? req.ascending.Value : true;
+                    qry = qry.OrderBy(req.orderBy, asc);
+                }
+                byte[] buffer = null;
+                string fileName = string.Empty;
+                string mimeType = string.Empty;
+                format = format.ToLower();
+                if (db.Handler != null)
+                    db.Handler.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+                else
+                    DefaultExport.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+                if (buffer != null)
+                    return File(buffer, mimeType, fileName);
+                else
+                    return NotFound();
+            }
+            return NotFound();
+        }
 
         [Route("{viewName}/dropdown")]
         [HttpGet]
@@ -279,6 +323,7 @@ namespace a2n.DynData
 
         [Route("viewNames")]
         [HttpPost]
+        [HttpGet]
         public virtual Task<string[]> GetAllViewNames()
         {
             return Task.Run(() =>
@@ -402,6 +447,58 @@ namespace a2n.DynData
         }
 
 
+        [Route("{viewName}/export")]
+        [HttpPost]
+        public virtual IActionResult Export(string viewName, ExportRequest req)
+        {
+            string format = string.Empty;
+            if (string.IsNullOrEmpty(req.format))
+                format = "csv";
+            else
+                format = req.format;
+            IQueryable<dynamic> qry = null;
+            Type valueType = null;
+            Metadata[] metadataArr = null;
+            PropertyInfo[] propArr = null;
+
+            if (qryTpl.HasQueryName(viewName))
+            {
+                qry = qryTpl.GetQuery(db, viewName, req.rules);
+                valueType = qryTpl.GetValueType(db, viewName);
+                metadataArr = qryTpl.GetMetadata(db, viewName);
+            }
+            else
+            {
+                valueType = db.GetTableType(viewName);
+                if (valueType != null)
+                {
+                    qry = db.Query(viewName, req.rules) as IQueryable<dynamic>;
+                    propArr = db.GetProperties(viewName);
+                    metadataArr = db.GetMetadata(viewName);
+                }
+            }
+            if (qry != null)
+            {
+                if (!string.IsNullOrEmpty(req.orderBy))
+                {
+                    var asc = req.ascending.HasValue ? req.ascending.Value : true;
+                    qry = qry.OrderBy(req.orderBy, asc);
+                }
+                byte[] buffer = null;
+                string fileName = string.Empty;
+                string mimeType = string.Empty;
+                format = format.ToLower();
+                if (db.Handler != null)
+                    db.Handler.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+                else
+                    DefaultExport.OnExport(format, viewName, valueType, metadataArr, qry, out buffer, out mimeType, out fileName);
+                if (buffer != null)
+                    return File(buffer, mimeType, fileName);
+                else
+                    return NotFound();
+            }
+            return NotFound();
+        }
         [Route("{viewName}/dropdown")]
         [HttpGet]
         public virtual Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
