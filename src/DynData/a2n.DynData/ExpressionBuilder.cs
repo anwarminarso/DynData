@@ -322,15 +322,26 @@ namespace a2n.DynData
                 case ExpressionOperator.StartsWith:
                 case ExpressionOperator.EndsWith:
                     {
-                        if (ReferenceFieldType != typeof(string))
-                            result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
-                        else
+                        if (ReferenceFieldType == typeof(string))
                         {
                             if (!string.IsNullOrEmpty(CompareFieldValue) && CompareFieldValue.StartsWith("\"") && CompareFieldValue.EndsWith("\""))
                                 result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
                             else
                                 result = CompareFieldValue;
                         }
+                        else if (ReferenceFieldType == typeof(DateTime) || ReferenceFieldType == typeof(DateTime?))
+                        {
+                            if (!string.IsNullOrEmpty(CompareFieldValue) && CompareFieldValue.StartsWith("\"") && CompareFieldValue.EndsWith("\""))
+                                result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
+                            else if (!string.IsNullOrEmpty(CompareFieldValue))
+                                result = Convert.ToDateTime(CompareFieldValue);
+                            else if (ReferenceFieldType == typeof(DateTime?))
+                                result = default(DateTime?);
+                            else
+                                throw new Exception("Failed to cast datetime");
+                        }
+                        else
+                            result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
                     }
                     break;
                 case ExpressionOperator.In:
