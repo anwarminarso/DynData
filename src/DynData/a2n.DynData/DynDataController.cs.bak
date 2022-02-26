@@ -10,7 +10,6 @@ using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Http;
 
 #nullable disable
 
@@ -685,82 +684,75 @@ namespace a2n.DynData
             this.auth = auth;
         }
 
-        private bool IsAllowed(DynDataAPIMethod methodName, string viewName)
+        private void IsAllowed(DynDataAPIMethod methodName, string viewName)
         {
             if (auth != null && !auth.IsAllowed(this.HttpContext, db, methodName, viewName))
             {
-                //if (string.IsNullOrEmpty(viewName))
-                //    throw new UnauthorizedAccessException(string.Format("User: {0}, not authorize to access method {1}",
-                //        this.HttpContext.User.Identity.Name, methodName.ToString()));
-                //else
-                //    throw new UnauthorizedAccessException(string.Format("User: {0}, not authorize to access method {1}, viewName: {2}",
-                //        this.HttpContext.User.Identity.Name, methodName.ToString(), viewName));
-                return false;
+                if (string.IsNullOrEmpty(viewName))
+                    throw new UnauthorizedAccessException(string.Format("User: {0}, not authorize to access method {1}",
+                        this.HttpContext.User.Identity.Name, methodName.ToString()));
+                else
+                    throw new UnauthorizedAccessException(string.Format("User: {0}, not authorize to access method {1}, viewName: {2}",
+                        this.HttpContext.User.Identity.Name, methodName.ToString(), viewName));
             }
-            return true;
         }
         [Route("viewNames")]
         [HttpPost]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string[]))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetAllViewNames()
+        public virtual Task<string[]> GetAllViewNames()
         {
-            if (!IsAllowed(DynDataAPIMethod.ViewNames, null))
-                return new UnauthorizedResult();
-
-            var tableNames = db.GetAllTableViewNames();
-            var tplNames = qryTpl.GetQueryTemplateNames();
-            return Ok(tableNames.Union(tplNames).OrderBy(t => t).ToArray());
+            IsAllowed(DynDataAPIMethod.ViewNames, null);
+            return Task.Run(() =>
+            {
+                var tableNames = db.GetAllTableViewNames();
+                var tplNames = qryTpl.GetQueryTemplateNames();
+                return tableNames.Union(tplNames).OrderBy(t => t).ToArray();
+            });
         }
 
         [Route("{viewName}/datatable")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DataTableJSResponse))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
+        public virtual Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
         {
-            if (!IsAllowed(DynDataAPIMethod.DataTable, viewName))
-                return new UnauthorizedResult();
-            IQueryable<dynamic> qry = null;
-            Type valueType = null;
-            Metadata[] metaArr = null;
-            if (qryTpl.HasQueryName(viewName))
+            IsAllowed(DynDataAPIMethod.DataTable, viewName);
+            return Task.Run(() =>
             {
-                qry = qryTpl.GetQuery(db, viewName);
-                valueType = qryTpl.GetValueType(db, viewName);
-                metaArr = qryTpl.GetMetadata(db, viewName);
-            }
-            else
-            {
-                valueType = db.GetTableType(viewName);
-                if (valueType != null)
+                IQueryable<dynamic> qry = null;
+                Type valueType = null;
+                Metadata[] metaArr = null;
+                if (qryTpl.HasQueryName(viewName))
                 {
-                    metaArr = db.GetMetadata(viewName);
-                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    qry = qryTpl.GetQuery(db, viewName);
+                    valueType = qryTpl.GetValueType(db, viewName);
+                    metaArr = qryTpl.GetMetadata(db, viewName);
                 }
-            }
-            if (qry != null)
-            {
-                var page = req.ToPagingResult(qry, valueType, metaArr);
-                var resp = new DataTableJSResponse(req, page);
-                return Ok(resp);
-            }
-            else
-                return Ok(new DataTableJSResponse(req, new PagingResult<dynamic>()));
+                else
+                {
+                    valueType = db.GetTableType(viewName);
+                    if (valueType != null)
+                    {
+                        metaArr = db.GetMetadata(viewName);
+                        qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    }
+                }
+                if (qry != null)
+                {
+                    var page = req.ToPagingResult(qry, valueType, metaArr);
+                    var resp = new DataTableJSResponse(req, page);
+                    return resp;
+                }
+                else
+                    return new DataTableJSResponse(req, new PagingResult<dynamic>());
+            });
         }
 
 
 
         [Route("{viewName}/datatable/export")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileContentResult))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public virtual IActionResult ExportDataTable(string viewName, [FromForm] DataTableJSExportRequest req)
         {
-            if (!IsAllowed(DynDataAPIMethod.DataTableExport, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.DataTableExport, viewName);
             string format = string.Empty;
             if (string.IsNullOrEmpty(req.format))
                 format = "csv";
@@ -809,40 +801,36 @@ namespace a2n.DynData
 
         [Route("{viewName}/list")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PagingResult<dynamic>))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetList(string viewName, PagingRequest req)
+        public virtual Task<PagingResult<dynamic>> GetList(string viewName, PagingRequest req)
         {
-            if (!IsAllowed(DynDataAPIMethod.List, viewName))
-                return new UnauthorizedResult();
-            IQueryable<dynamic> qry = null;
-            if (qryTpl.HasQueryName(viewName))
-                qry = qryTpl.GetQuery(db, viewName, req.rules);
-            else
-                qry = db.Query(viewName, req.rules);
-            if (qry != null)
+            IsAllowed(DynDataAPIMethod.List, viewName);
+            return Task.Run(() =>
             {
-                if (!string.IsNullOrEmpty(req.orderBy))
+                IQueryable<dynamic> qry = null;
+                if (qryTpl.HasQueryName(viewName))
+                    qry = qryTpl.GetQuery(db, viewName, req.rules);
+                else
+                    qry = db.Query(viewName, req.rules);
+                if (qry != null)
                 {
-                    var asc = req.ascending.HasValue ? req.ascending.Value : true;
-                    qry = qry.OrderBy(req.orderBy, asc);
+                    if (!string.IsNullOrEmpty(req.orderBy))
+                    {
+                        var asc = req.ascending.HasValue ? req.ascending.Value : true;
+                        qry = qry.OrderBy(req.orderBy, asc);
+                    }
+                    return qry.ToPagingResult(req.pageSize, req.pageIndex);
                 }
-                return Ok(qry.ToPagingResult(req.pageSize, req.pageIndex));
-            }
-            else
-                return Ok(new PagingResult<dynamic>());
+                else
+                    return new PagingResult<dynamic>();
+            });
         }
 
 
         [Route("{viewName}/export")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileContentResult))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public virtual IActionResult Export(string viewName, ExportRequest req)
         {
-            if (!IsAllowed(DynDataAPIMethod.Export, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.Export, viewName);
             string format = string.Empty;
             if (string.IsNullOrEmpty(req.format))
                 format = "csv";
@@ -891,126 +879,105 @@ namespace a2n.DynData
             }
             return NotFound();
         }
-
-
         [Route("{viewName}/dropdown")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PagingResult<dynamic>))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
+        public virtual Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
         {
-            if (!IsAllowed(DynDataAPIMethod.DropDown, viewName))
-                return new UnauthorizedResult();
-
-            IQueryable<dynamic> qry = null;
-            Type valueType = null;
-            ExpressionRule rule = null;
-            if (!string.IsNullOrEmpty(search))
+            IsAllowed(DynDataAPIMethod.DropDown, viewName);
+            return Task.Run(() =>
             {
-                rule = new ExpressionRule()
+                IQueryable<dynamic> qry = null;
+                Type valueType = null;
+                ExpressionRule rule = null;
+                if (!string.IsNullOrEmpty(search))
                 {
-                    IsBracket = false,
-                    ReferenceFieldName = labelField,
-                    Operator = ExpressionOperator.Contains,
-                    CompareFieldValue = search
-                };
-            }
-            if (qryTpl.HasQueryName(viewName))
-            {
-                valueType = qryTpl.GetValueType(db, viewName);
-                qry = qryTpl.GetQuery(db, viewName, rule);
-            }
-            else
-            {
-                valueType = db.GetTableType(viewName);
-                qry = db.Query(viewName, rule);
-            }
-            if (qry != null)
-            {
-                //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
-                return Ok(qry.ToPagingResult(pageSize, pageIndex));
-            }
-            else
-                return Ok(new PagingResult<dynamic>());
+                    rule = new ExpressionRule()
+                    {
+                        IsBracket = false,
+                        ReferenceFieldName = labelField,
+                        Operator = ExpressionOperator.Contains,
+                        CompareFieldValue = search
+                    };
+                }
+                if (qryTpl.HasQueryName(viewName))
+                {
+                    valueType = qryTpl.GetValueType(db, viewName);
+                    qry = qryTpl.GetQuery(db, viewName, rule);
+                }
+                else
+                {
+                    valueType = db.GetTableType(viewName);
+                    qry = db.Query(viewName, rule);
+                }
+                if (qry != null)
+                {
+                    //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
+                    return qry.ToPagingResult(pageSize, pageIndex);
+                }
+                else
+                    return new PagingResult<dynamic>();
+            });
         }
 
 
         [Route("{viewName}/read")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult ReadRecord(string viewName, System.Text.Json.JsonElement data)
+        public virtual object ReadRecord(string viewName, System.Text.Json.JsonElement data)
         {
-            if (!IsAllowed(DynDataAPIMethod.Read, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.Read, viewName);
 
             JObject jObj = JObject.Parse(data.ToString());
             if (jObj.Properties().Count() == 0)
                 return null;
             if (qryTpl.HasQueryName(viewName))
             {
-                var obj = qryTpl.FindByKey(db, viewName, jObj);
-                return Ok(obj);
+                return qryTpl.FindByKey(db, viewName, jObj);
             }
             else
             {
-                var obj = db.FindByKey(viewName, jObj);
-                return Ok(obj);
+                return db.FindByKey(viewName, jObj);
             }
         }
 
         [Route("{viewName}/create")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object[]))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult CreateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] CreateRecord(string viewName, System.Text.Json.JsonElement value)
         {
-            if (!IsAllowed(DynDataAPIMethod.Create, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.Create, viewName);
 
             var dataArr = db.Create(viewName, value);
             db.SaveChanges();
-            return Ok(dataArr);
+            return dataArr;
         }
 
         [Route("{viewName}/update")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object[]))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult UpdateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] UpdateRecord(string viewName, System.Text.Json.JsonElement value)
         {
-            if (!IsAllowed(DynDataAPIMethod.Update, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.Update, viewName);
 
             var results = db.Update(viewName, value);
             db.SaveChanges();
-            return Ok(results);
+            return results;
         }
 
         [Route("{viewName}/delete")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object[]))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult DeleteRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] DeleteRecord(string viewName, System.Text.Json.JsonElement value)
         {
-            if (!IsAllowed(DynDataAPIMethod.Delete, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.Delete, viewName);
 
             var results = db.Delete(viewName, value);
             db.SaveChanges();
-            return Ok(results);
+            return results;
         }
 
         [Route("{viewName}/metadata")]
         [HttpPost]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MetadataInfo))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetMetadata(string viewName)
+        public virtual MetadataInfo GetMetadata(string viewName)
         {
-            if (!IsAllowed(DynDataAPIMethod.Metadata, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.Metadata, viewName);
 
             Metadata[] results = new Metadata[0];
             string crudTableName = null;
@@ -1033,23 +1000,20 @@ namespace a2n.DynData
                     results = new Metadata[0];
             }
 
-            return Ok(new MetadataInfo()
+            return new MetadataInfo()
             {
                 viewName = viewName,
                 metaData = results,
                 crudTableName = crudTableName
-            });
+            };
         }
 
         [Route("{viewName}/metadataQB")]
         [HttpPost]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MetadataInfo))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetMetadataQB(string viewName)
+        public virtual MetadataInfo GetMetadataQB(string viewName)
         {
-            if (!IsAllowed(DynDataAPIMethod.MetadataQB, viewName))
-                return new UnauthorizedResult();
+            IsAllowed(DynDataAPIMethod.MetadataQB, viewName);
 
             Type tableType = null;
             Metadata[] results = new Metadata[0];
@@ -1074,13 +1038,13 @@ namespace a2n.DynData
                     results = new Metadata[0];
             }
 
-            return Ok(new MetadataInfo()
+            return new MetadataInfo()
             {
                 viewName = viewName,
                 metaData = results,
                 crudTableName = crudTableName,
                 queryBuilderOptions = jQueryBuilderModel.GenerateFilterOptions(tableType, results)
-            });
+            };
         }
     }
 }

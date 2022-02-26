@@ -48,6 +48,36 @@ namespace a2n.DynData
             dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery, CRUDTableType, OnMetadataGenerated));
         }
 
+        public void AddQuery<TResult>(Func<T, IQueryable<TResult>> funQuery, params Metadata[] metadata)
+        {
+            string QueryName = typeof(TResult).Name;
+            if(dicQueryList.ContainsKey(QueryName))
+                throw new Exception($"Duplicate query name {QueryName}");
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, metadata));
+        }
+        public void AddQuery<TResult>(Type CRUDTableType, Func<T, IQueryable<TResult>> funQuery, params Metadata[] metadata)
+        {
+            string QueryName = typeof(TResult).Name;
+            if (dicQueryList.ContainsKey(QueryName))
+                throw new Exception($"Duplicate query name {QueryName}");
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, CRUDTableType, metadata));
+        }
+        public void AddQuery<TResult>(Func<T, IQueryable<TResult>> funQuery, Action<Metadata> OnMetadataGenerated)
+        {
+            string QueryName = typeof(TResult).Name;
+            if (dicQueryList.ContainsKey(QueryName))
+                throw new Exception($"Duplicate query name {QueryName}");
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, OnMetadataGenerated));
+        }
+        public void AddQuery<TResult>(Type CRUDTableType, Func<T, IQueryable<TResult>> funQuery, Action<Metadata> OnMetadataGenerated)
+        {
+            string QueryName = typeof(TResult).Name;
+            if (dicQueryList.ContainsKey(QueryName))
+                throw new Exception($"Duplicate query name {QueryName}");
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, CRUDTableType, OnMetadataGenerated));
+        }
+
+
         public void SetMetadata(string QueryName, params Metadata[] metadata)
         {
             if (!dicQueryList.ContainsKey(QueryName))
@@ -154,6 +184,7 @@ namespace a2n.DynData
         }
 
     }
+
     public class QueryMeta<T>
         where T : DbContext
     {

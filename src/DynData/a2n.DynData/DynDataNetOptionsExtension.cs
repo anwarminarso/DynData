@@ -58,7 +58,7 @@ namespace a2n.DynData
             }
             public override void PopulateDebugInfo([NotNullAttribute] IDictionary<string, string> debugInfo)
             {
-                debugInfo["MyRaspNet.DataAccess:" + nameof(Extension.DBSetting)] = HashCode.Combine(Extension.DBSetting).ToString(CultureInfo.InvariantCulture);
+                debugInfo["a2n.DataAccess:" + nameof(Extension.DBSetting)] = HashCode.Combine(Extension.DBSetting).ToString(CultureInfo.InvariantCulture);
             }
 
             public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other)

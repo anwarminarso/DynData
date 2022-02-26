@@ -52,4 +52,28 @@ namespace a2n.DynData
             }
         }
     }
+    public class DynDataRouteConvention<TDbContext, TTemplate, TAPIAuth> : IControllerModelConvention
+        where TDbContext : DynDbContext, new()
+        where TTemplate : QueryTemplate<TDbContext>, new()
+        where TAPIAuth: IDynDataAPIAuth
+    {
+        private readonly string ControllerName = string.Empty;
+        public DynDataRouteConvention()
+        {
+        }
+        public DynDataRouteConvention(string ControllerName)
+        {
+            this.ControllerName = ControllerName;
+        }
+        public void Apply(ControllerModel controller)
+        {
+            if (controller.ControllerType.IsGenericType && controller.ControllerType == typeof(DynDataController<TDbContext, TTemplate, TAPIAuth>))
+            {
+                if (!String.IsNullOrEmpty(ControllerName))
+                    controller.ControllerName = ControllerName;
+                else
+                    controller.ControllerName = typeof(TDbContext).Name;
+            }
+        }
+    }
 }

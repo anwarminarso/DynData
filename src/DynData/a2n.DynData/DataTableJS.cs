@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 #nullable disable
 namespace a2n.DynData
 {
@@ -44,6 +45,101 @@ namespace a2n.DynData
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
+
+            #region External Filter
+            if (!string.IsNullOrEmpty(externalFilter))
+            {
+                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
+
+                var externalFilterRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+
+                foreach (JProperty prop in Objval.Properties())
+                {
+                    var meta = propArr.Where(t => t.Name == prop.Name).SingleOrDefault();
+                    if (meta == null)
+                        continue;
+
+                    JArray values = null;
+                    List<string> valueQry = new List<string>();
+                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
+                    if (prop.Value.Type == JTokenType.Array)
+                        values = prop.Value as JArray;
+                    else
+                    {
+                        values = new JArray();
+                        values.Add(prop.Value);
+                    }
+                    foreach (JValue value in values)
+                    {
+                        var val = value.Value.ToString();
+                        ExpressionRule childFilter = null;
+                        if (val.StartsWith(">"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.LessThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("<"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.GreaterThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("="))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else
+                        {
+                            val = val.Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        childFilters.Add(childFilter);
+                    }
+                    foreach (var item in childFilters)
+                        externalFilterRule.AddChild(item);
+                }
+
+                if (externalFilterRule.Children.Length > 0)
+                    rootRule.AddChild(externalFilterRule);
+            }
+            #endregion
+
             if (!string.IsNullOrEmpty(search.value))
             {
                 var globalSearchRule = new ExpressionRule()
@@ -92,6 +188,100 @@ namespace a2n.DynData
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
+
+            #region External Filter
+            if (!string.IsNullOrEmpty(externalFilter))
+            {
+                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
+
+                var externalFilterRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+
+                foreach (JProperty prop in Objval.Properties())
+                {
+                    var meta = metaArr.Where(t => t.FieldName == prop.Name).SingleOrDefault();
+                    if (meta == null)
+                        continue;
+
+                    JArray values = null;
+                    List<string> valueQry = new List<string>();
+                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
+                    if (prop.Value.Type == JTokenType.Array)
+                        values = prop.Value as JArray;
+                    else
+                    {
+                        values = new JArray();
+                        values.Add(prop.Value);
+                    }
+                    foreach (JValue value in values)
+                    {
+                        var val = value.Value.ToString();
+                        ExpressionRule childFilter = null;
+                        if (val.StartsWith(">"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.LessThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("<"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.GreaterThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("="))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else
+                        {
+                            val = val.Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        childFilters.Add(childFilter);
+                    }
+                    foreach (var item in childFilters)
+                        externalFilterRule.AddChild(item);
+                }
+
+                if (externalFilterRule.Children.Length > 0)
+                    rootRule.AddChild(externalFilterRule);
+            }
+            #endregion
             if (!string.IsNullOrEmpty(search.value))
             {
                 var globalSearchRule = new ExpressionRule()
@@ -285,7 +475,7 @@ namespace a2n.DynData
         public string jsonQB { get; set; } = null;
         public string format { get; set; }
 
-        public string externalfilter { get; set; }
+        public string externalFilter { get; set; }
 
         public ExpressionRule[] ToRules(Type type)
         {
@@ -300,6 +490,100 @@ namespace a2n.DynData
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
+
+
+            #region External Filter
+            if (!string.IsNullOrEmpty(externalFilter))
+            {
+                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
+
+                var externalFilterRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+                foreach (JProperty prop in Objval.Properties())
+                {
+                    var meta = propArr.Where(t => t.Name == prop.Name).SingleOrDefault();
+                    if (meta == null)
+                        continue;
+
+                    JArray values = null;
+                    List<string> valueQry = new List<string>();
+                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
+                    if (prop.Value.Type == JTokenType.Array)
+                        values = prop.Value as JArray;
+                    else
+                    {
+                        values = new JArray();
+                        values.Add(prop.Value);
+                    }
+                    foreach (JValue value in values)
+                    {
+                        var val = value.Value.ToString();
+                        ExpressionRule childFilter = null;
+                        if (val.StartsWith(">"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.LessThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("<"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.GreaterThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("="))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else
+                        {
+                            val = val.Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        childFilters.Add(childFilter);
+                    }
+                    foreach (var item in childFilters)
+                        externalFilterRule.AddChild(item);
+                }
+
+                if (externalFilterRule.Children.Length > 0)
+                    rootRule.AddChild(externalFilterRule);
+            }
+            #endregion
             if (!string.IsNullOrEmpty(globalSearch))
             {
                 var globalSearchRule = new ExpressionRule()
@@ -349,6 +633,99 @@ namespace a2n.DynData
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
+            #region External Filter
+            if (!string.IsNullOrEmpty(externalFilter))
+            {
+                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
+
+                var externalFilterRule = new ExpressionRule()
+                {
+                    IsBracket = true,
+                    LogicalOperator = ExpressionLogicalOperator.And
+                };
+
+                foreach (JProperty prop in Objval.Properties())
+                {
+                    var meta = metaArr.Where(t => t.FieldName == prop.Name).SingleOrDefault();
+                    if (meta == null)
+                        continue;
+
+                    JArray values = null;
+                    List<string> valueQry = new List<string>();
+                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
+                    if (prop.Value.Type == JTokenType.Array)
+                        values = prop.Value as JArray;
+                    else
+                    {
+                        values = new JArray();
+                        values.Add(prop.Value);
+                    }
+                    foreach (JValue value in values)
+                    {
+                        var val = value.Value.ToString();
+                        ExpressionRule childFilter = null;
+                        if (val.StartsWith(">"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.LessThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("<"))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.GreaterThan,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("="))
+                        {
+                            val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else
+                        {
+                            val = val.Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        childFilters.Add(childFilter);
+                    }
+                    foreach (var item in childFilters)
+                        externalFilterRule.AddChild(item);
+                }
+
+                if (externalFilterRule.Children.Length > 0)
+                    rootRule.AddChild(externalFilterRule);
+            }
+            #endregion
             if (!string.IsNullOrEmpty(globalSearch))
             {
                 var globalSearchRule = new ExpressionRule()

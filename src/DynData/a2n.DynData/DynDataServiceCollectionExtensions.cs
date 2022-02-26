@@ -42,5 +42,22 @@ namespace a2n.DynData
                 });
             return services;
         }
+        public static IServiceCollection AddDynDataApi<TDbContext, TTemplate, TAPIAuth>(this IServiceCollection services, string ControllerName)
+            where TDbContext : DynDbContext, new()
+            where TTemplate : QueryTemplate<TDbContext>, new()
+            where TAPIAuth : IDynDataAPIAuth
+        {
+            services.AddSingleton<TTemplate>();
+            services.AddScoped(typeof(TAPIAuth));
+            services.AddControllers(o =>
+            {
+                o.Conventions.Add(new DynDataRouteConvention<TDbContext, TTemplate, TAPIAuth>(ControllerName));
+            })
+                .ConfigureApplicationPartManager(o =>
+                {
+                    o.FeatureProviders.Add(new DynDataControllerFeatureProvider<TDbContext, TTemplate, TAPIAuth>());
+                });
+            return services;
+        }
     }
 }
