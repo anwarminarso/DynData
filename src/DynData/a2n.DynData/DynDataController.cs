@@ -287,6 +287,27 @@ namespace a2n.DynData
             }
             else
                 results = new Metadata[0];
+            //if (results != null && results.Length > 0)
+            //{
+            //    List<Metadata> resultLst = new List<Metadata>();
+            //    foreach (var item in results)
+            //    {
+            //        if (item.CustomAttributes != null)
+            //        {
+            //            Type t = item.CustomAttributes.GetType();
+            //            var hiddenProp = t.GetProperties().Where(t => t.Name == "Hidden").SingleOrDefault();
+            //            if (hiddenProp != null)
+            //            {
+            //                var obj = hiddenProp.GetValue(item);
+            //                if (obj != null && Boolean.TryParse(obj.ToString(), out bool hidden)) continue;
+            //                continue;
+            //            }
+
+            //        }
+            //        resultLst.Add(item);
+            //    }
+            //    results = resultLst.ToArray();
+            //}
 
             return new MetadataInfo()
             {
@@ -1073,7 +1094,6 @@ namespace a2n.DynData
                 else
                     results = new Metadata[0];
             }
-
             return Ok(new MetadataInfo()
             {
                 viewName = viewName,

@@ -87,6 +87,20 @@ namespace a2n.DynData
                 var pt = propArr.Where(t => t.Name == meta.FieldName).Select(t => t.PropertyType).FirstOrDefault();
                 if (pt == null)
                     continue;
+                if (meta.CustomAttributes != null)
+                {
+                    var obj = meta.CustomAttributes;
+                    var propHidden = obj.GetType().GetProperty("Hidden");
+                    if(propHidden != null)
+                    {
+                        var val = propHidden.GetValue(obj);
+                        if (val != null && Boolean.TryParse(val.ToString(), out bool hidden))
+                        {
+                            if (hidden)
+                                continue;
+                        }
+                    }
+                }
                 if (!meta.IsSearchable)
                     continue;
                 dicValues["label"] = meta.FieldLabel;

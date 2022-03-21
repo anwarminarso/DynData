@@ -1,8 +1,7 @@
 ﻿/// <reference path="../jquery/dist/jquery.js" />
 /// <reference path="../bootstrap/dist/js/bootstrap.bundle.js" />
 /// <reference path="a2n.js" />
-
-
+/// <reference path="../moment/moment.min.js" />
 
 // a2n.dyndata
 // version 1.0.0
@@ -78,6 +77,8 @@ a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, 
         allowView: false,
         allowExport: false,
         rowCommandButtons: [],
+        multiSelectCheckbox: false,
+        multiSelectCheckboxClass: 'select-checkbox',
         onRowCommand: function (commandName, rowIndex, rowData) { },
         enableQueryBuilder: true,
         metaData: [],
@@ -171,7 +172,9 @@ a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, 
                 r.viewName = viewName;
                 r.id = tableId;
                 if (obj.externalFilter)
-                    r.externalFilter = obj.externalFilter;
+                    r.externalFilter = JSON.stringify(obj.externalFilter);
+                else
+                    r.externalFilter = null;
                 if (obj.qbRuleSet) {
                     r.jsonQB = JSON.stringify({
                         referenceType: obj.viewName,
@@ -181,6 +184,12 @@ a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, 
             }
         }
     };
+    if (this.dynOptions.multiSelectCheckbox) {
+        this.tableOptions.select = {
+            style: 'multi',
+            selector: 'td:first-child'
+        };
+    }
 
     if (options && options.tableOptions)
         this.tableOptions = $.extend(this.tableOptions, options.tableOptions);
@@ -207,7 +216,7 @@ a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, 
 }
 a2n.dyndata.DataTable.prototype = {
     _IsRendered: false,
-    LoadMetadata: function (render) {
+    LoadMetadata: function (render, callback) {
         let _this = this;
         let _render = render;
         let _apiMetaUrl = a2n.dyndata.Configuration.getApiMetadataQB(_this.controller, _this.viewName);
@@ -230,15 +239,15 @@ a2n.dyndata.DataTable.prototype = {
                 _this.dynOptions.allowDelete = false;
             }
             if (_render)
-                _this.Render();
+                _this.Render(callback);
         });
     },
-    Render: function () {
+    Render: function (callback) {
         let _this = this;
         if (_this._IsRendered)
             return;
         if (!_this.dynOptions.metaData || _this.dynOptions.metaData.length == 0) {
-            _this.LoadMetadata(true);
+            _this.LoadMetadata(true, callback);
             return;
         }
         let tabletpl = `
@@ -252,6 +261,20 @@ a2n.dyndata.DataTable.prototype = {
         let $row = $tbl.find('tr');
         let columns = [];
         let columnDefs = [];
+        let shiftIdx = 0;
+        if (_this.dynOptions.multiSelectCheckbox) {
+            $row.append('<th data-sortable="false" data-searchable="false"></th>');
+            shiftIdx = 1;
+            columns.push({ data: null });
+            columnDefs.push({
+                orderable: false,
+                className: _this.dynOptions.multiSelectCheckboxClass,
+                targets: 0,
+                render: function(data, type, row) {
+                    return " ";
+                }
+            });
+        }
         for (let i = 0; i < _this.dynOptions.metaData.length; i++) {
             let data = _this.dynOptions.metaData[i];
             if (data.CustomAttributes) {
@@ -263,6 +286,41 @@ a2n.dyndata.DataTable.prototype = {
             else
                 $row.append(`<th data-name="${data.FieldName}" ${!data.IsOrderable ? 'data-sortable="false"' : ""}  ${!data.IsSearchable ? 'data-searchable="false"' : ""}>${data.FieldLabel}</th>`);
             columns.push({ data: data.FieldName, name: data.FieldName, title: data.FieldLabel });
+            if (data.FieldType === 'DateTime') {
+                columnDefs.push({
+                    targets: i + shiftIdx,
+                    render: function (data, type, row) {
+                        if (data)
+                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        else
+                            return "";
+                    }
+                });
+            }
+            else if (data.FieldType === 'DateOnly') {
+                columnDefs.push({
+                    targets: i + shiftIdx,
+                    render: function (data, type, row) {
+                        if (data) {
+                            var dt = new Date(data.Year, data.Month - 1, data.Day);
+                            return moment(dt).format('YYYY-MM-DD');
+                        }
+                        else
+                            return "";
+                    }
+                });
+            }
+            else if (data.FieldType === 'Double' || data.FieldType === 'Single') {
+                columnDefs.push({
+                    targets: i + shiftIdx,
+                    render: function (data, type, row) {
+                        if (data)
+                            return data.toLocaleString();
+                        else
+                            return "";
+                    }
+                });
+            }
         }
         if (_this.dynOptions.hasPK && _this.dynOptions.rowCommandButtons && _this.dynOptions.rowCommandButtons.length > 0) {
             $row.append('<th data-searchable="false" data-sortable="false">Action</th>');
@@ -321,6 +379,20 @@ a2n.dyndata.DataTable.prototype = {
             _tableOptions.columns = columns;
         if (!_tableOptions.columnDefs)
             _tableOptions.columnDefs = columnDefs;
+        else {
+            for (var i = 0; i < columnDefs.length; i++) {
+                var colDef = columnDefs[i];
+                var usrDef = null;
+                for (var j = 0; j < _tableOptions.columnDefs.length; j++) {
+                    if (_tableOptions.columnDefs[j].targets !== undefined && _tableOptions.columnDefs[j].targets == colDef.targets) {
+                        usrDef = _tableOptions.columnDefs[j];
+                        break;
+                    }
+                }
+                if (!usrDef)
+                    _tableOptions.columnDefs.push(columnDefs[i]);
+            }
+        }
         let dt = $tbl.DataTable(_tableOptions);
         _this.dt = dt;
         if (!_this.dynOptions.useBuiltInSearchMode) {
@@ -356,6 +428,8 @@ a2n.dyndata.DataTable.prototype = {
                 });
         }
         _this._IsRendered = true;
+        if (callback)
+            callback();
     },
     RowCommand: function (commandName, rowIndex) {
         let _this = this;
@@ -409,7 +483,8 @@ a2n.dyndata.DataTable.prototype = {
         this.dt.ajax.reload();
     },
     Export: function (format) {
-        let req = { viewName: this.viewName, externalfilter: this.externalFilter };
+        var extFilter = this.externalFilter ? JSON.stringify(this.externalFilter) : null;
+        let req = { viewName: this.viewName, externalfilter: extFilter };
         let apiExportUrl = a2n.dyndata.Configuration.getApiDataTableExport(this.controller, this.viewName);
         req.globalSearch = this.dt.search();
         req.format = format;

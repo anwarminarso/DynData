@@ -17,6 +17,7 @@ namespace a2n.DynData
 {
     public class ExpressionBuilder
     {
+        private static readonly MethodInfo MethodStringContainsIgnoreCase = typeof(String).GetMethod(nameof(String.Contains), new Type[] { typeof(String), typeof(StringComparison) });
         private static readonly MethodInfo MethodStringContains = typeof(String).GetMethod(nameof(String.Contains), new Type[] { typeof(String) });
         private static readonly MethodInfo MethodStringStartsWith = typeof(String).GetMethod(nameof(String.StartsWith), new Type[] { typeof(String) });
         private static readonly MethodInfo MethodStringEndsWith = typeof(String).GetMethod(nameof(String.EndsWith), new Type[] { typeof(String) });

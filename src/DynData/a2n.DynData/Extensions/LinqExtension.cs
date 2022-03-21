@@ -204,9 +204,28 @@ namespace System.Linq
         public static void ExportToCSV(this IQueryable<object> query, Metadata[] metadataArr, StreamWriter writer)
         {
             bool firstField = true;
-            for (int i = 0; i < metadataArr.Length; i++)
+            List<Metadata> metaFilter = new List<Metadata>();
+            foreach (var item in metadataArr)
             {
-                var meta = metadataArr[i];
+                if (item.CustomAttributes != null)
+                {
+                    var obj = item.CustomAttributes;
+                    var propHidden = obj.GetType().GetProperty("Hidden");
+                    if (propHidden != null)
+                    {
+                        var val = propHidden.GetValue(obj);
+                        if (val != null && Boolean.TryParse(val.ToString(), out bool hidden))
+                        {
+                            if (hidden)
+                                continue;
+                        }
+                    }
+                }
+                metaFilter.Add(item);
+            }
+            for (int i = 0; i < metaFilter.Count; i++)
+            {
+                var meta = metaFilter[i];
                 if (firstField)
                     firstField = false;
                 else
@@ -220,9 +239,9 @@ namespace System.Linq
             foreach (var item in query)
             {
                 firstField = true;
-                for (int i = 0; i < metadataArr.Length; i++)
+                for (int i = 0; i < metaFilter.Count; i++)
                 {
-                    var meta = metadataArr[i];
+                    var meta = metaFilter[i];
                     var pi = meta.PropertyInfo;
                     var val = pi.GetValue(item, null);
                     if (firstField)
@@ -250,6 +269,7 @@ namespace System.Linq
         {
             var sytemProps = typeof(T).GetProperties().Where(t => t.PropertyType.Namespace == "System").ToArray();
             bool firstField = true;
+            
             for (int i = 0; i < sytemProps.Length; i++)
             {
                 var pi = sytemProps[i];
@@ -290,7 +310,26 @@ namespace System.Linq
         public static void ExportToExcel(this IQueryable<dynamic> query, Type valueType, Metadata[] metadataArr, Stream strm)
         {
             LiteExcelWriter xlWriter = new LiteExcelWriter();
-            xlWriter.Render(query, valueType, metadataArr, strm);
+            List<Metadata> metaFilter = new List<Metadata>();
+            foreach (var item in metadataArr)
+            {
+                if (item.CustomAttributes != null)
+                {
+                    var obj = item.CustomAttributes;
+                    var propHidden = obj.GetType().GetProperty("Hidden");
+                    if (propHidden != null)
+                    {
+                        var val = propHidden.GetValue(obj);
+                        if (val != null && Boolean.TryParse(val.ToString(), out bool hidden))
+                        {
+                            if (hidden)
+                                continue;
+                        }
+                    }
+                }
+                metaFilter.Add(item);
+            }
+            xlWriter.Render(query, valueType, metaFilter.ToArray(), strm);
         }
         public static void ExportToExcel<T>(this IQueryable<T> query, Stream strm)
         {
