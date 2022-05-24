@@ -51,6 +51,9 @@ namespace a2n.DynData
                     case ExpressionOperator.Contains:
                         result = Expression.Call(prop, MethodStringContains, Expression.Constant(value, typeof(string)));
                         break;
+                    case ExpressionOperator.ContainsIgnoreCase:
+                        result = Expression.Call(prop, MethodStringContainsIgnoreCase, Expression.Constant(value, typeof(string)), Expression.Constant(StringComparison.OrdinalIgnoreCase, typeof(StringComparison)));
+                        break;
                     case ExpressionOperator.NotContains:
                         {
                             var exp = Expression.Call(prop, MethodStringContains, Expression.Constant(value, typeof(string)));
@@ -418,6 +421,7 @@ namespace a2n.DynData
         LessThan,
         LessThanOrEqual,
         Contains,
+        ContainsIgnoreCase,
         NotContains,
         StartsWith,
         EndsWith,

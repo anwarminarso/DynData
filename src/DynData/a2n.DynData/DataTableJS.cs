@@ -20,6 +20,10 @@ namespace a2n.DynData
         public int length { get; set; }
         public int draw { get; set; }
 
+
+        [JsonIgnore]
+        public bool EnableSearchIgnoreCase { get; set; } = false;
+
         public DataTableJSSearch search { get; set; } = new DataTableJSSearch();
 
         public string externalFilter { get; set; }
@@ -155,7 +159,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = ExpressionOperator.Contains,
+                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
                             ReferenceFieldName = prop.Name,
                             ReferenceFieldType = prop.PropertyType,
                             CompareFieldObject = search.value
@@ -299,7 +303,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = ExpressionOperator.Contains,
+                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase :  ExpressionOperator.Contains,
                             ReferenceFieldName = meta.FieldName,
                             ReferenceFieldType = meta.PropertyInfo.PropertyType,
                             CompareFieldObject = search.value
@@ -477,6 +481,10 @@ namespace a2n.DynData
 
         public string externalFilter { get; set; }
 
+
+        [JsonIgnore]
+        public bool EnableSearchIgnoreCase { get; set; } = false;
+
         public ExpressionRule[] ToRules(Type type)
         {
             return ToRules(type.GetProperties());
@@ -599,7 +607,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = ExpressionOperator.Contains,
+                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
                             ReferenceFieldName = prop.Name,
                             ReferenceFieldType = prop.PropertyType,
                             CompareFieldObject = globalSearch
@@ -743,7 +751,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = ExpressionOperator.Contains,
+                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
                             ReferenceFieldName = meta.FieldName,
                             ReferenceFieldType = meta.PropertyInfo.PropertyType,
                             CompareFieldObject = globalSearch
