@@ -42,13 +42,24 @@ namespace a2n.DynData
                 });
             return services;
         }
-        public static IServiceCollection AddDynDataApi<TDbContext, TTemplate, TAPIAuth>(this IServiceCollection services, string ControllerName)
+        public static IServiceCollection AddDynDataApi<TAPIAuth, TDbContext, TTemplate>(this IServiceCollection services, string ControllerName)
             where TDbContext : DynDbContext, new()
             where TTemplate : QueryTemplate<TDbContext>, new()
             where TAPIAuth : IDynDataAPIAuth
         {
+            services.TryAddSingleton<RegisteredAPIAuth>();
             services.AddSingleton<TTemplate>();
             services.AddScoped(typeof(TAPIAuth));
+            //services.TryAddSingleton(p =>
+            //{
+            //    var registerAPIAuth = p.GetService<RegisteredAPIAuth>();
+            //    if (registerAPIAuth == null)
+            //    {
+            //        registerAPIAuth = p.GetService<RegisteredAPIAuth>();
+            //    }
+            //    registerAPIAuth!.Register<TAPIAuth, TDbContext>(ControllerName);
+            //    return registerAPIAuth!;
+            //});
             services.AddControllers(o =>
             {
                 o.Conventions.Add(new DynDataRouteConvention<TDbContext, TTemplate, TAPIAuth>(ControllerName));
@@ -58,6 +69,19 @@ namespace a2n.DynData
                     o.FeatureProviders.Add(new DynDataControllerFeatureProvider<TDbContext, TTemplate, TAPIAuth>());
                 });
             return services;
+        }
+    }
+
+
+    public static class DynDataApplicationBuilderExtensions
+    {
+        public static void RegisterDynDataServiceAPIAuth<TAPIAuth, TDbContext, TTemplate>(this IApplicationBuilder builder, string ControllerName)
+            where TDbContext : DynDbContext, new()
+            where TTemplate : QueryTemplate<TDbContext>, new()
+            where TAPIAuth : IDynDataAPIAuth
+        {
+            var registeredAPIAuth = builder.ApplicationServices.GetService<RegisteredAPIAuth>();
+            registeredAPIAuth!.Register<TAPIAuth, TDbContext, TTemplate>(ControllerName);
         }
     }
 }

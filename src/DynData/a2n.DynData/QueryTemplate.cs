@@ -8,7 +8,12 @@ using System.Reflection;
 
 namespace a2n.DynData
 {
-    public abstract class QueryTemplate<T>
+    public interface IQueryTemplate
+    {
+        string[] GetQueryTemplateNames();
+        bool HasQueryName(string QueryName);
+    }
+    public abstract class QueryTemplate<T> : IQueryTemplate
         where T : DbContext
     {
         private readonly Dictionary<string, QueryMeta<T>> dicQueryList = new Dictionary<string, QueryMeta<T>>();

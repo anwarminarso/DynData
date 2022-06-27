@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace a2n.DynData
 {
     public interface IDynDataAPIAuth
     {
-        public bool IsAllowed(HttpContext context, DynDbContext db, DynDataAPIMethod method, string viewName);
+        public bool IsAllowed(HttpContext context, string controllerName, DynDbContext db, DynDataAPIMethod method, string viewName);
     }
     public enum DynDataAPIMethod
     {

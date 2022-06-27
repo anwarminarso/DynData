@@ -708,7 +708,8 @@ namespace a2n.DynData
 
         private bool IsAllowed(DynDataAPIMethod methodName, string viewName)
         {
-            if (auth != null && !auth.IsAllowed(this.HttpContext, db, methodName, viewName))
+            var controllerName = this.ControllerContext.ActionDescriptor.ControllerName;
+            if (auth != null && !auth.IsAllowed(this.HttpContext, controllerName, db, methodName, viewName))
             {
                 //if (string.IsNullOrEmpty(viewName))
                 //    throw new UnauthorizedAccessException(string.Format("User: {0}, not authorize to access method {1}",
