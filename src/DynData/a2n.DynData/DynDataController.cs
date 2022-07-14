@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Cors;
 
 #nullable disable
 
@@ -18,6 +19,7 @@ namespace a2n.DynData
 {
     [ApiController]
     [Authorize]
+    //[EnableCors("DynData")]
     [Route("/dyndata/[controller]")]
     public class DynDataController<TDbContext> : ControllerBase
         where TDbContext : DynDbContext, new()
@@ -328,6 +330,8 @@ namespace a2n.DynData
     /// <typeparam name="TDbContext">DynDbContext</typeparam>
     /// <typeparam name="TTemplate">BaseQueryTemplateSettings</typeparam>
     [ApiController]
+    [Authorize]
+    //[EnableCors("DynData")]
     [Route("/dyndata/[controller]")]
     public class DynDataController<TDbContext, TTemplate> : ControllerBase
         where TDbContext : DynDbContext, new()
@@ -685,6 +689,8 @@ namespace a2n.DynData
     /// <typeparam name="TDbContext">DynDbContext</typeparam>
     /// <typeparam name="TTemplate">BaseQueryTemplateSettings</typeparam>
     [ApiController]
+    [Authorize]
+    //[EnableCors("DynData")]
     [Route("/dyndata/[controller]")]
     public class DynDataController<TDbContext, TTemplate, TApiAuth> : ControllerBase
         where TDbContext : DynDbContext, new()
