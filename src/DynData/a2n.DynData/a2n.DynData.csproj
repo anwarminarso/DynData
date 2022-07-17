@@ -9,6 +9,7 @@
     <PackageProjectUrl>https://github.com/anwarminarso/DynData</PackageProjectUrl>
     <Copyright>Anwar Minarso @ 2021</Copyright>
     <RepositoryUrl>https://github.com/anwarminarso/DynData</RepositoryUrl>
+    <VersionPrefix>1.0.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
