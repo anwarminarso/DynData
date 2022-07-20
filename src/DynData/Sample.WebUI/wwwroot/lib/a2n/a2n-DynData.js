@@ -60,7 +60,10 @@ a2n.dyndata.Configuration = {
 a2n.dyndata.Utils = {
     dtInstances: {},
     QBInstance: null,
-    FormInstance: null
+    FormInstance: null,
+    htmlEncode: function (value) {
+        return $('<textarea/>').text(value).html();
+    }
 }
 a2n.dyndata.DataTable = function (tableId, parentElement, controller, viewName, options) {
     this.ID = tableId;
@@ -286,7 +289,18 @@ a2n.dyndata.DataTable.prototype = {
             else
                 $row.append(`<th data-name="${data.FieldName}" ${!data.IsOrderable ? 'data-sortable="false"' : ""}  ${!data.IsSearchable ? 'data-searchable="false"' : ""}>${data.FieldLabel}</th>`);
             columns.push({ data: data.FieldName, name: data.FieldName, title: data.FieldLabel });
-            if (data.FieldType === 'DateTime') {
+            if (data.FieldType === 'String') {
+                columnDefs.push({
+                    targets: i + shiftIdx,
+                    render: function (data, type, row) {
+                        if (data)
+                            return a2n.dyndata.Utils.htmlEncode(data);
+                        else
+                            return "";
+                    }
+                });
+            }
+            else if (data.FieldType === 'DateTime') {
                 columnDefs.push({
                     targets: i + shiftIdx,
                     render: function (data, type, row) {
