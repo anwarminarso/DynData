@@ -8,7 +8,8 @@ using Sample.WebUI.Configuration;
 using Sample.DataAccess;
 using a2n.DynData;
 using Newtonsoft.Json;
-
+using Sample.WebUI.Data;
+using Microsoft.AspNetCore.Identity;
 
 namespace Sample.WebUI
 {
@@ -86,7 +87,44 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
             });
             #endregion
 
+            #region Default Auth
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddDatabaseDeveloperPageExceptionFilter();
 
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+
+                // Password settings.
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequiredLength = 5;
+                options.Password.RequiredUniqueChars = 0;
+
+                // Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+
+                // User settings.
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                options.User.RequireUniqueEmail = true;
+            });
+            
+            services.AddAuthentication();
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = options.DefaultPolicy;
+            });
+            #endregion
+            
             // Cache 200 (OK) server responses; any other responses, including error pages, are ignored.
             services.AddResponseCaching();
 
@@ -107,10 +145,13 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
 
             // enable DynData API
             //services.AddDynDataApi<AdventureWorksContext>("tableOnly"); // without query template ==> api path /dyndata/tableOnly/...
-            //services.AddDynDataApi<AdventureWorksContext, AdvWorkQueryTemplate>("adv"); // with query template ==> api path /dyndata/adv/...
-            services.AddDynDataApi<AdventureWorksContext, AdvWorkQueryTemplate, Security.APIAuth>("adv"); // with auth and query template ==> api path /dyndata/adv/...
+            
+            
+            services.AddDynDataApi<AdventureWorksContext, AdvWorkQueryTemplate>("adv"); // with query template ==> api path /dyndata/adv/...
+
+            //services.AddDynDataApi<Security.APIAuth, AdventureWorksContext, AdvWorkQueryTemplate>("adv"); // with auth and query template ==> api path /dyndata/adv/...
         }
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, AppSettings settings)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, AppSettings settings, IServiceScopeFactory factory)
         {
             // required for linux environment
             app.UseForwardedHeaders(new ForwardedHeadersOptions()
@@ -139,6 +180,8 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
                 x.AllowAnyHeader();
             });
             app.UseSession();
+            app.UseAuthentication();
+            app.UseAuthorization();
             // User response compression
             app.UseResponseCompression();
 
@@ -148,11 +191,21 @@ Database Name   : {1}", settings.DBConnectionSetting.Provider.ToString(), db.Dat
             // Use response compression.
             app.UseResponseCompression();
 
+
+            //register Auth api required if security enabled
+            //app.RegisterDynDataServiceAPIAuth<Security.APIAuth, AdventureWorksContext, AdvWorkQueryTemplate>("adv");
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
+
+            using (var scope = factory.CreateScope())
+            {
+                ApplicationDbContext db = (ApplicationDbContext) scope.ServiceProvider.GetService<ApplicationDbContext>();
+                db.Database.EnsureCreated();
+            }
         }
 
     }

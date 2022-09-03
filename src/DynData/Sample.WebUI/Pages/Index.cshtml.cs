@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
 using Sample.DataAccess;
@@ -6,6 +7,7 @@ using Sample.WebUI.Configuration;
 
 namespace Sample.WebUI.Pages
 {
+    [Authorize()]
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> logger;

@@ -6,7 +6,7 @@ namespace Sample.WebUI.Security
 
     public class APIAuth : IDynDataAPIAuth
     {
-        public bool IsAllowed(HttpContext context, DynDbContext db, DynDataAPIMethod method, string viewName)
+        public bool IsAllowed(HttpContext context, string controllerName, DynDbContext db, DynDataAPIMethod method, string viewName)
         {
             string userName = String.Empty;
             if (context != null && context.User != null && context.User.Identity.IsAuthenticated)
@@ -45,5 +45,6 @@ namespace Sample.WebUI.Security
 
             return true;
         }
+
     }
 }

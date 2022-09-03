@@ -31,8 +31,8 @@ namespace a2n.DynData
         public DynDbContext(DatabaseServer DBSetting)
         {
             this.DBSetting = DBSetting;
-            var opt = new DynDataNetOptionsExtension();
-            opt.DBSetting = DBSetting;
+            //var opt = new DynDataNetOptionsExtension();
+            //opt.DBSetting = DBSetting;
         }
         protected DynDbContext(DbContextOptions options)
             : base(options)
