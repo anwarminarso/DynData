@@ -12,6 +12,8 @@ namespace a2n.DynData
     public class DatabaseServer
     {
         public string ConnectionString { get; set; }
+        
+        public string DefaultSchema { get; set; } = "";
 
         [JsonConverter(typeof(StringEnumConverter))]
         public DatabaseProvider Provider { get; set; }

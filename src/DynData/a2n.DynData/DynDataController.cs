@@ -213,7 +213,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/read")]
         [HttpPost]
-        public virtual object ReadRecord(string viewName, System.Text.Json.JsonElement data)
+        public virtual object ReadRecord(string viewName, JToken data)
         {
             JObject jObj = JObject.Parse(data.ToString());
             if (jObj.Properties().Count() == 0)
@@ -223,7 +223,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/create")]
         [HttpPost]
-        public virtual object[] CreateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] CreateRecord(string viewName, JToken value)
         {
             var dataArr = db.Create(viewName, value);
             db.SaveChanges();
@@ -232,7 +232,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/update")]
         [HttpPost]
-        public virtual object[] UpdateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] UpdateRecord(string viewName, JToken value)
         {
             var results = db.Update(viewName, value);
             db.SaveChanges();
@@ -241,7 +241,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/delete")]
         [HttpPost]
-        public virtual object[] DeleteRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] DeleteRecord(string viewName, JToken value)
         {
             var results = db.Delete(viewName, value);
             db.SaveChanges();
@@ -568,7 +568,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/read")]
         [HttpPost]
-        public virtual object ReadRecord(string viewName, System.Text.Json.JsonElement data)
+        public virtual object ReadRecord(string viewName, JToken data)
         {
             JObject jObj = JObject.Parse(data.ToString());
             if (jObj.Properties().Count() == 0)
@@ -585,7 +585,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/create")]
         [HttpPost]
-        public virtual object[] CreateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] CreateRecord(string viewName, JToken value)
         {
             var dataArr = db.Create(viewName, value);
             db.SaveChanges();
@@ -594,7 +594,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/update")]
         [HttpPost]
-        public virtual object[] UpdateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] UpdateRecord(string viewName, JToken value)
         {
             var results = db.Update(viewName, value);
             db.SaveChanges();
@@ -603,7 +603,7 @@ namespace a2n.DynData
 
         [Route("{viewName}/delete")]
         [HttpPost]
-        public virtual object[] DeleteRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual object[] DeleteRecord(string viewName, JToken value)
         {
             var results = db.Delete(viewName, value);
             db.SaveChanges();
@@ -967,7 +967,7 @@ namespace a2n.DynData
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult ReadRecord(string viewName, System.Text.Json.JsonElement data)
+        public virtual IActionResult ReadRecord(string viewName, JToken data)
         {
             if (!IsAllowed(DynDataAPIMethod.Read, viewName))
                 return new UnauthorizedResult();
@@ -991,7 +991,7 @@ namespace a2n.DynData
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object[]))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult CreateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual IActionResult CreateRecord(string viewName, JToken value)
         {
             if (!IsAllowed(DynDataAPIMethod.Create, viewName))
                 return new UnauthorizedResult();
@@ -1006,7 +1006,7 @@ namespace a2n.DynData
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object[]))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult UpdateRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual IActionResult UpdateRecord(string viewName, JToken value)
         {
             if (!IsAllowed(DynDataAPIMethod.Update, viewName))
                 return new UnauthorizedResult();
@@ -1020,7 +1020,7 @@ namespace a2n.DynData
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object[]))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult DeleteRecord(string viewName, System.Text.Json.JsonElement value)
+        public virtual IActionResult DeleteRecord(string viewName, JToken value)
         {
             if (!IsAllowed(DynDataAPIMethod.Delete, viewName))
                 return new UnauthorizedResult();
