@@ -26,9 +26,11 @@ namespace Microsoft.EntityFrameworkCore
                 case DatabaseProvider.Postgres:
                     optionsBuilder = optionsBuilder.UseNpgsql(dbSetting.ConnectionString);
                     break;
+#if ENABLE_MYSQL
                 case DatabaseProvider.MySql:
                     optionsBuilder = optionsBuilder.UseMySql(dbSetting.ConnectionString, ServerVersion.AutoDetect(dbSetting.ConnectionString));
                     break;
+#endif
                 case DatabaseProvider.Sqlite:
                     optionsBuilder = optionsBuilder.UseSqlite(dbSetting.ConnectionString);
                     break;
@@ -53,9 +55,11 @@ namespace Microsoft.EntityFrameworkCore
                 case DatabaseProvider.Postgres:
                     optionsBuilder = optionsBuilder.UseNpgsql(dbSetting.ConnectionString);
                     break;
+#if ENABLE_MYSQL
                 case DatabaseProvider.MySql:
                     optionsBuilder = optionsBuilder.UseMySql(dbSetting.ConnectionString, ServerVersion.AutoDetect(dbSetting.ConnectionString));
                     break;
+#endif
                 case DatabaseProvider.Sqlite:
                     optionsBuilder = optionsBuilder.UseSqlite(dbSetting.ConnectionString);
                     break;

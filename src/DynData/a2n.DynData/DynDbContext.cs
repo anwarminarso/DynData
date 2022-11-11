@@ -22,7 +22,9 @@ namespace a2n.DynData
 
 
         public DatabaseServer DBSetting { get; set; }
+#if ENABLE_MYSQL
         public ServerVersion MySqlVersion { get; set; }
+#endif
         public DynDbContextEventHandler Handler { get; internal set; }
 
         public DynDbContext()
