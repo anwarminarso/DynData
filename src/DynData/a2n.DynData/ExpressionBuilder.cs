@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -51,12 +52,31 @@ namespace a2n.DynData
                     case ExpressionOperator.Contains:
                         result = Expression.Call(prop, MethodStringContains, Expression.Constant(value, typeof(string)));
                         break;
-                    case ExpressionOperator.ContainsIgnoreCase:
-                        result = Expression.Call(prop, MethodStringContainsIgnoreCase, Expression.Constant(value, typeof(string)), Expression.Constant(StringComparison.OrdinalIgnoreCase, typeof(StringComparison)));
-                        break;
                     case ExpressionOperator.NotContains:
                         {
                             var exp = Expression.Call(prop, MethodStringContains, Expression.Constant(value, typeof(string)));
+                            result = Expression.Not(exp);
+                        }
+                        break;
+                    case ExpressionOperator.PGSQLContains:
+                        //result = Expression.Call(prop, MethodStringContainsIgnoreCase, Expression.Constant(value, typeof(string)), Expression.Constant(StringComparison.OrdinalIgnoreCase, typeof(StringComparison)));
+                        result = Expression.Call(
+                           typeof(NpgsqlDbFunctionsExtensions),
+                           nameof(NpgsqlDbFunctionsExtensions.ILike),
+                           Type.EmptyTypes,
+                           Expression.Property(null, typeof(EF), nameof(EF.Functions)),
+                           prop,
+                           Expression.Constant($"%{value}%"));
+                        break;
+                    case ExpressionOperator.PGSQLNotContains:
+                        {
+                            var exp = Expression.Call(
+                               typeof(NpgsqlDbFunctionsExtensions),
+                               nameof(NpgsqlDbFunctionsExtensions.ILike),
+                               Type.EmptyTypes,
+                               Expression.Property(null, typeof(EF), nameof(EF.Functions)),
+                               prop,
+                               Expression.Constant($"%{value}%"));
                             result = Expression.Not(exp);
                         }
                         break;
@@ -259,7 +279,7 @@ namespace a2n.DynData
             get
             {
                 return _children.ToArray();
-            } 
+            }
             set
             {
                 if (value != null)
@@ -267,7 +287,7 @@ namespace a2n.DynData
                 else
                     _children = new List<ExpressionRule>();
             }
-        } 
+        }
 
         public int OrderId { get; set; }
         public bool IsBracket { get; set; }
@@ -344,8 +364,21 @@ namespace a2n.DynData
                             else
                                 throw new Exception("Failed to cast datetime");
                         }
+                        else if (ReferenceFieldType == typeof(Guid) || ReferenceFieldType == typeof(Guid?))
+                        {
+                            if (!string.IsNullOrEmpty(CompareFieldValue) && CompareFieldValue.StartsWith("\"") && CompareFieldValue.EndsWith("\""))
+                                result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
+                            else if (!string.IsNullOrEmpty(CompareFieldValue))
+                                result = new Guid(CompareFieldValue);
+                            else if (ReferenceFieldType == typeof(DateTime?))
+                                result = default(Guid?);
+                            else
+                                throw new Exception("Failed to cast guid");
+                        }
                         else
+                        {
                             result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
+                        }
                     }
                     break;
                 case ExpressionOperator.In:
@@ -421,13 +454,14 @@ namespace a2n.DynData
         LessThan,
         LessThanOrEqual,
         Contains,
-        ContainsIgnoreCase,
         NotContains,
         StartsWith,
         EndsWith,
         In,
         NotIn,
         IsNullOrEmpty,
-        IsNotNullOrEmpty
+        IsNotNullOrEmpty,
+        PGSQLContains,
+        PGSQLNotContains,
     }
 }
