@@ -21,8 +21,7 @@ namespace a2n.DynData
         public int draw { get; set; }
 
 
-        [JsonIgnore]
-        public bool EnableSearchIgnoreCase { get; set; } = false;
+        public bool usePGSQL { get; set; } = false;
 
         public DataTableJSSearch search { get; set; } = new DataTableJSSearch();
 
@@ -159,7 +158,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
+                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : ExpressionOperator.Contains,
                             ReferenceFieldName = prop.Name,
                             ReferenceFieldType = prop.PropertyType,
                             CompareFieldObject = search.value
@@ -303,7 +302,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase :  ExpressionOperator.Contains,
+                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : ExpressionOperator.Contains,
                             ReferenceFieldName = meta.FieldName,
                             ReferenceFieldType = meta.PropertyInfo.PropertyType,
                             CompareFieldObject = search.value
@@ -482,8 +481,7 @@ namespace a2n.DynData
         public string externalFilter { get; set; }
 
 
-        [JsonIgnore]
-        public bool EnableSearchIgnoreCase { get; set; } = false;
+        public bool usePGSQL { get; set; } = false;
 
         public ExpressionRule[] ToRules(Type type)
         {
@@ -607,7 +605,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
+                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : ExpressionOperator.Contains,
                             ReferenceFieldName = prop.Name,
                             ReferenceFieldType = prop.PropertyType,
                             CompareFieldObject = globalSearch
@@ -751,7 +749,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
+                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : ExpressionOperator.Contains,
                             ReferenceFieldName = meta.FieldName,
                             ReferenceFieldType = meta.PropertyInfo.PropertyType,
                             CompareFieldObject = globalSearch
