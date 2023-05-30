@@ -22,9 +22,6 @@
   </ItemGroup>
   <Choose>
     <When Condition="'$(TargetFramework)' == 'net6.0'">
-      <PropertyGroup>
-        <DefineConstants>ENABLE_MYSQL</DefineConstants>
-      </PropertyGroup>
       <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.12" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.12" />
@@ -32,7 +29,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.12" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
+        <!--<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />-->
       </ItemGroup>
     </When>
     <When Condition="'$(TargetFramework)' == 'net7.0'">
