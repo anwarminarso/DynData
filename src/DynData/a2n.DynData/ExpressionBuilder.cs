@@ -12,7 +12,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using SysJsonSerial = System.Text.Json.Serialization;
 
-#nullable disable
+
 
 namespace a2n.DynData
 {

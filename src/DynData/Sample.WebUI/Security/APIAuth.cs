@@ -6,6 +6,14 @@ namespace Sample.WebUI.Security
 
     public class APIAuth : IDynDataAPIAuth
     {
+        public void ApplyRequest(HttpContext context, DynDbContext db, string ViewName, DataTableJSRequest req)
+        {
+        }
+
+        public void ApplyRequest(HttpContext context, DynDbContext db, string ViewName, DataTableJSExportRequest req)
+        {
+        }
+
         public bool IsAllowed(HttpContext context, string controllerName, DynDbContext db, DynDataAPIMethod method, string viewName)
         {
             string userName = String.Empty;

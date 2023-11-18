@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Cors;
 
-#nullable disable
+
 
 namespace a2n.DynData
 {
@@ -27,10 +27,11 @@ namespace a2n.DynData
         private readonly ILogger<DynDataController<TDbContext>> logger;
         private readonly TDbContext db;
         private readonly IServiceProvider provider;
-        public DynDataController(ILogger<DynDataController<TDbContext>> logger, TDbContext db)
+        public DynDataController(ILogger<DynDataController<TDbContext>> logger, TDbContext db, IServiceProvider provider)
         {
             this.logger = logger;
             this.db = db;
+            this.provider = provider;
         }
         [Route("viewNames")]
         [HttpPost]
@@ -340,13 +341,13 @@ namespace a2n.DynData
         private readonly ILogger<DynDataController<TDbContext>> logger;
         private readonly TDbContext db;
         private readonly TTemplate qryTpl;
-
-        public DynDataController(ILogger<DynDataController<TDbContext>> logger, TDbContext db, TTemplate qryTpl)
+        private readonly IServiceProvider provider;
+        public DynDataController(ILogger<DynDataController<TDbContext>> logger, TDbContext db, TTemplate qryTpl, IServiceProvider provider)
         {
             this.logger = logger;
             this.db = db;
             this.qryTpl = qryTpl;
-
+            this.provider = provider;
         }
         [Route("viewNames")]
         [HttpPost]
@@ -770,6 +771,7 @@ namespace a2n.DynData
             }
             if (qry != null)
             {
+                auth.ApplyRequest(this.HttpContext, db, viewName, req);
                 var page = req.ToPagingResult(qry, valueType, metaArr);
                 var resp = new DataTableJSResponse(req, page);
                 return Ok(resp);
@@ -817,6 +819,7 @@ namespace a2n.DynData
             }
             if (qry != null)
             {
+                auth.ApplyRequest(this.HttpContext, db, viewName, req);
                 qry = req.ToQueryable(qry, valueType, metadataArr);
                 byte[] buffer = null;
                 string fileName = string.Empty;
