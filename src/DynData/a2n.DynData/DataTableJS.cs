@@ -9,7 +9,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-#nullable disable
+
 namespace a2n.DynData
 {
     public class DataTableJSRequest
@@ -126,11 +126,19 @@ namespace a2n.DynData
                             ExpressionRule childFilter = null;
                             if (val.StartsWith(">"))
                             {
-                                val = val.Substring(1, val.Length - 1).Trim();
+                                var opr = ExpressionOperator.LessThan;
+                                if (val.StartsWith(">="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.LessThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+
                                 childFilter = new ExpressionRule()
                                 {
                                     IsBracket = false,
-                                    Operator = ExpressionOperator.LessThan,
+                                    Operator = opr,
                                     LogicalOperator = ExpressionLogicalOperator.And,
                                     ReferenceFieldName = meta.Name,
                                     ReferenceFieldType = meta.PropertyType,
@@ -139,11 +147,19 @@ namespace a2n.DynData
                             }
                             else if (val.StartsWith("<"))
                             {
-                                val = val.Substring(1, val.Length - 1).Trim();
+                                var opr = ExpressionOperator.GreaterThan;
+                                if (val.StartsWith("<="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+
                                 childFilter = new ExpressionRule()
                                 {
                                     IsBracket = false,
-                                    Operator = ExpressionOperator.GreaterThan,
+                                    Operator = opr,
                                     LogicalOperator = ExpressionLogicalOperator.And,
                                     ReferenceFieldName = meta.Name,
                                     ReferenceFieldType = meta.PropertyType,
@@ -157,6 +173,39 @@ namespace a2n.DynData
                                 {
                                     IsBracket = false,
                                     Operator = ExpressionOperator.Equal,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("%"))
+                            {
+                                var opr = ExpressionOperator.EndsWith;
+                                if (val.EndsWith("%"))
+                                {
+                                    val = val.Substring(1, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.Contains;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.EndsWith("%"))
+                            {
+                                val = val.Substring(0, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.StartsWith,
                                     LogicalOperator = ExpressionLogicalOperator.And,
                                     ReferenceFieldName = meta.Name,
                                     ReferenceFieldType = meta.PropertyType,
@@ -311,11 +360,19 @@ namespace a2n.DynData
                             ExpressionRule childFilter = null;
                             if (val.StartsWith(">"))
                             {
-                                val = val.Substring(1, val.Length - 1).Trim();
+                                var opr = ExpressionOperator.LessThan;
+                                if (val.StartsWith(">="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.LessThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+
                                 childFilter = new ExpressionRule()
                                 {
                                     IsBracket = false,
-                                    Operator = ExpressionOperator.LessThan,
+                                    Operator = opr,
                                     LogicalOperator = ExpressionLogicalOperator.And,
                                     ReferenceFieldName = meta.FieldName,
                                     ReferenceFieldType = meta.PropertyInfo.PropertyType,
@@ -324,11 +381,18 @@ namespace a2n.DynData
                             }
                             else if (val.StartsWith("<"))
                             {
-                                val = val.Substring(1, val.Length - 1).Trim();
+                                var opr = ExpressionOperator.GreaterThan;
+                                if (val.StartsWith("<="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
                                 childFilter = new ExpressionRule()
                                 {
                                     IsBracket = false,
-                                    Operator = ExpressionOperator.GreaterThan,
+                                    Operator = opr,
                                     LogicalOperator = ExpressionLogicalOperator.And,
                                     ReferenceFieldName = meta.FieldName,
                                     ReferenceFieldType = meta.PropertyInfo.PropertyType,
@@ -348,6 +412,39 @@ namespace a2n.DynData
                                     CompareFieldValue = val
                                 };
                             }
+                            else if (val.StartsWith("%"))
+                            {
+                                var opr = ExpressionOperator.EndsWith;
+                                if (val.EndsWith("%"))
+                                {
+                                    val = val.Substring(1, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.Contains;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.EndsWith("%"))
+                            {
+                                val = val.Substring(0, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.StartsWith,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
                             else
                             {
                                 val = val.Trim();
@@ -361,6 +458,7 @@ namespace a2n.DynData
                                     CompareFieldValue = val
                                 };
                             }
+
                             childFilters.Add(childFilter);
                         }
                     }
@@ -619,11 +717,19 @@ namespace a2n.DynData
                         ExpressionRule childFilter = null;
                         if (val.StartsWith(">"))
                         {
-                            val = val.Substring(1, val.Length - 1).Trim();
+                            var opr = ExpressionOperator.LessThan;
+                            if (val.StartsWith(">="))
+                            {
+                                val = val.Substring(2, val.Length - 2).Trim();
+                                opr = ExpressionOperator.LessThanOrEqual;
+                            }
+                            else
+                                val = val.Substring(1, val.Length - 1).Trim();
+
                             childFilter = new ExpressionRule()
                             {
                                 IsBracket = false,
-                                Operator = ExpressionOperator.LessThan,
+                                Operator = opr,
                                 LogicalOperator = ExpressionLogicalOperator.And,
                                 ReferenceFieldName = meta.Name,
                                 ReferenceFieldType = meta.PropertyType,
@@ -632,11 +738,19 @@ namespace a2n.DynData
                         }
                         else if (val.StartsWith("<"))
                         {
-                            val = val.Substring(1, val.Length - 1).Trim();
+                            var opr = ExpressionOperator.GreaterThan;
+                            if (val.StartsWith("<="))
+                            {
+                                val = val.Substring(2, val.Length - 2).Trim();
+                                opr = ExpressionOperator.GreaterThanOrEqual;
+                            }
+                            else
+                                val = val.Substring(1, val.Length - 1).Trim();
+
                             childFilter = new ExpressionRule()
                             {
                                 IsBracket = false,
-                                Operator = ExpressionOperator.GreaterThan,
+                                Operator = opr,
                                 LogicalOperator = ExpressionLogicalOperator.And,
                                 ReferenceFieldName = meta.Name,
                                 ReferenceFieldType = meta.PropertyType,
@@ -650,6 +764,39 @@ namespace a2n.DynData
                             {
                                 IsBracket = false,
                                 Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("%"))
+                        {
+                            var opr = ExpressionOperator.EndsWith;
+                            if (val.EndsWith("%"))
+                            {
+                                val = val.Substring(1, val.Length - 2).Trim();
+                                opr = ExpressionOperator.Contains;
+                            }
+                            else
+                                val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = opr,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.Name,
+                                ReferenceFieldType = meta.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.EndsWith("%"))
+                        {
+                            val = val.Substring(0, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.StartsWith,
                                 LogicalOperator = ExpressionLogicalOperator.And,
                                 ReferenceFieldName = meta.Name,
                                 ReferenceFieldType = meta.PropertyType,
@@ -761,11 +908,19 @@ namespace a2n.DynData
                         ExpressionRule childFilter = null;
                         if (val.StartsWith(">"))
                         {
-                            val = val.Substring(1, val.Length - 1).Trim();
+                            var opr = ExpressionOperator.LessThan;
+                            if (val.StartsWith(">="))
+                            {
+                                val = val.Substring(2, val.Length - 2).Trim();
+                                opr = ExpressionOperator.LessThanOrEqual;
+                            }
+                            else
+                                val = val.Substring(1, val.Length - 1).Trim();
+
                             childFilter = new ExpressionRule()
                             {
                                 IsBracket = false,
-                                Operator = ExpressionOperator.LessThan,
+                                Operator = opr,
                                 LogicalOperator = ExpressionLogicalOperator.And,
                                 ReferenceFieldName = meta.FieldName,
                                 ReferenceFieldType = meta.PropertyInfo.PropertyType,
@@ -774,11 +929,18 @@ namespace a2n.DynData
                         }
                         else if (val.StartsWith("<"))
                         {
-                            val = val.Substring(1, val.Length - 1).Trim();
+                            var opr = ExpressionOperator.GreaterThan;
+                            if (val.StartsWith("<="))
+                            {
+                                val = val.Substring(2, val.Length - 2).Trim();
+                                opr = ExpressionOperator.GreaterThanOrEqual;
+                            }
+                            else
+                                val = val.Substring(1, val.Length - 1).Trim();
                             childFilter = new ExpressionRule()
                             {
                                 IsBracket = false,
-                                Operator = ExpressionOperator.GreaterThan,
+                                Operator = opr,
                                 LogicalOperator = ExpressionLogicalOperator.And,
                                 ReferenceFieldName = meta.FieldName,
                                 ReferenceFieldType = meta.PropertyInfo.PropertyType,
@@ -792,6 +954,39 @@ namespace a2n.DynData
                             {
                                 IsBracket = false,
                                 Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.StartsWith("%"))
+                        {
+                            var opr = ExpressionOperator.EndsWith;
+                            if (val.EndsWith("%"))
+                            {
+                                val = val.Substring(1, val.Length - 2).Trim();
+                                opr = ExpressionOperator.Contains;
+                            }
+                            else
+                                val = val.Substring(1, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = opr,
+                                LogicalOperator = ExpressionLogicalOperator.And,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                        }
+                        else if (val.EndsWith("%"))
+                        {
+                            val = val.Substring(0, val.Length - 1).Trim();
+                            childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.EndsWith,
                                 LogicalOperator = ExpressionLogicalOperator.And,
                                 ReferenceFieldName = meta.FieldName,
                                 ReferenceFieldType = meta.PropertyInfo.PropertyType,
