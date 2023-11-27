@@ -373,9 +373,9 @@ namespace a2n.DynData
                 Metadata[] metaArr = null;
                 if (qryTpl.HasQueryName(viewName))
                 {
-                    qry = qryTpl.GetQuery(db, viewName);
-                    valueType = qryTpl.GetValueType(db, viewName);
-                    metaArr = qryTpl.GetMetadata(db, viewName);
+                    qry = qryTpl.GetQuery(db, provider, viewName);
+                    valueType = qryTpl.GetValueType(db, provider, viewName);
+                    metaArr = qryTpl.GetMetadata(db, provider, viewName);
                 }
                 else
                 {
@@ -415,9 +415,9 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, viewName);
-                valueType = qryTpl.GetValueType(db, viewName);
-                metadataArr = qryTpl.GetMetadata(db, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
             else
             {
@@ -457,7 +457,7 @@ namespace a2n.DynData
             {
                 IQueryable<dynamic> qry = null;
                 if (qryTpl.HasQueryName(viewName))
-                    qry = qryTpl.GetQuery(db, viewName, req.rules);
+                    qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
                 else
                     qry = db.Query(viewName, req.rules);
                 if (qry != null)
@@ -491,9 +491,9 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, viewName, req.rules);
-                valueType = qryTpl.GetValueType(db, viewName);
-                metadataArr = qryTpl.GetMetadata(db, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
             else
             {
@@ -548,8 +548,8 @@ namespace a2n.DynData
                 }
                 if (qryTpl.HasQueryName(viewName))
                 {
-                    valueType = qryTpl.GetValueType(db, viewName);
-                    qry = qryTpl.GetQuery(db, viewName, rule);
+                    valueType = qryTpl.GetValueType(db, provider, viewName);
+                    qry = qryTpl.GetQuery(db, provider, viewName, rule);
                 }
                 else
                 {
@@ -576,7 +576,7 @@ namespace a2n.DynData
                 return null;
             if (qryTpl.HasQueryName(viewName))
             {
-                return qryTpl.FindByKey(db, viewName, jObj);
+                return qryTpl.FindByKey(db, provider, viewName, jObj);
             }
             else
             {
@@ -620,7 +620,7 @@ namespace a2n.DynData
             string crudTableName = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                results = qryTpl.GetMetadata(db, viewName);
+                results = qryTpl.GetMetadata(db, provider, viewName);
                 var crudTableType = qryTpl.GetCRUDTableType(viewName);
                 if (crudTableType != null)
                     crudTableName = crudTableType.Name;
@@ -655,8 +655,8 @@ namespace a2n.DynData
             string crudTableName = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                results = qryTpl.GetMetadata(db, viewName);
-                tableType = qryTpl.GetValueType(db, viewName);
+                results = qryTpl.GetMetadata(db, provider, viewName);
+                tableType = qryTpl.GetValueType(db, provider, viewName);
                 var crudTableType = qryTpl.GetCRUDTableType(viewName);
                 if (crudTableType != null)
                     crudTableName = crudTableType.Name;
@@ -756,9 +756,9 @@ namespace a2n.DynData
             Metadata[] metaArr = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, viewName);
-                valueType = qryTpl.GetValueType(db, viewName);
-                metaArr = qryTpl.GetMetadata(db, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                metaArr = qryTpl.GetMetadata(db, provider, viewName);
             }
             else
             {
@@ -803,9 +803,9 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, viewName);
-                valueType = qryTpl.GetValueType(db, viewName);
-                metadataArr = qryTpl.GetMetadata(db, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
             else
             {
@@ -848,7 +848,7 @@ namespace a2n.DynData
                 return new UnauthorizedResult();
             IQueryable<dynamic> qry = null;
             if (qryTpl.HasQueryName(viewName))
-                qry = qryTpl.GetQuery(db, viewName, req.rules);
+                qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
             else
                 qry = db.Query(viewName, req.rules);
             if (qry != null)
@@ -886,9 +886,9 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, viewName, req.rules);
-                valueType = qryTpl.GetValueType(db, viewName);
-                metadataArr = qryTpl.GetMetadata(db, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
             else
             {
@@ -948,8 +948,8 @@ namespace a2n.DynData
             }
             if (qryTpl.HasQueryName(viewName))
             {
-                valueType = qryTpl.GetValueType(db, viewName);
-                qry = qryTpl.GetQuery(db, viewName, rule);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName, rule);
             }
             else
             {
@@ -980,7 +980,7 @@ namespace a2n.DynData
                 return null;
             if (qryTpl.HasQueryName(viewName))
             {
-                var obj = qryTpl.FindByKey(db, viewName, jObj);
+                var obj = qryTpl.FindByKey(db, provider, viewName, jObj);
                 return Ok(obj);
             }
             else
@@ -1047,7 +1047,7 @@ namespace a2n.DynData
             string crudTableName = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                results = qryTpl.GetMetadata(db, viewName);
+                results = qryTpl.GetMetadata(db, provider, viewName);
                 var crudTableType = qryTpl.GetCRUDTableType(viewName);
                 if (crudTableType != null)
                     crudTableName = crudTableType.Name;
@@ -1087,8 +1087,8 @@ namespace a2n.DynData
             string crudTableName = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                results = qryTpl.GetMetadata(db, viewName);
-                tableType = qryTpl.GetValueType(db, viewName);
+                results = qryTpl.GetMetadata(db, provider, viewName);
+                tableType = qryTpl.GetValueType(db, provider, viewName);
                 var crudTableType = qryTpl.GetCRUDTableType(viewName);
                 if (crudTableType != null)
                     crudTableName = crudTableType.Name;

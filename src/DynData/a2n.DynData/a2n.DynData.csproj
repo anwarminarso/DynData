@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  
   <PropertyGroup>
     <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <!--<TargetFramework>net6.0</TargetFramework>-->
@@ -15,9 +14,7 @@
     <DefineConstants>$(DefineConstants);ENABLE_MYSQL</DefineConstants>
     <Version>8.0.0</Version>
   </PropertyGroup>
-  <!--<PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <Version>6.0.25</Version>
-  </PropertyGroup>-->
+
   <ItemGroup>
     <None Remove="DynDataController.cs.bak" />
   </ItemGroup>
@@ -57,14 +54,14 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />-->
-        
+
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0-rc.2" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0-beta.1" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0-beta.2" />
       </ItemGroup>
     </When>
   </Choose>

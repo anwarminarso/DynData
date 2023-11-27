@@ -21,7 +21,7 @@ namespace Sample.WebUI.Configuration
             // dengan default crudnya ke table SalesPerson
             AddQuery("IniQueryTemplate_vSalesPerson",
                 typeof(SalesPerson), // CRUD table type
-                db =>
+                (db, provider) =>
                 {
                     var qry = (from s in db.SalesPeople
                                join e in db.Employees on s.BusinessEntityId equals e.BusinessEntityId // inner join

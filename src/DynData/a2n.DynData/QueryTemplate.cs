@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 
@@ -27,26 +28,26 @@ namespace a2n.DynData
         {
             return dicQueryList.ContainsKey(QueryName);
         }
-        public void AddQuery(string QueryName, Func<T, IQueryable<dynamic>> funQuery, params Metadata[] metadata)
+        public void AddQuery(string QueryName, Func<T, IServiceProvider, IQueryable<dynamic>> funQuery, params Metadata[] metadata)
         {
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
             dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery, metadata));
         }
-        public void AddQuery(string QueryName, Type CRUDTableType, Func<T, IQueryable<dynamic>> funQuery, params Metadata[] metadata)
+        public void AddQuery(string QueryName, Type CRUDTableType, Func<T, IServiceProvider, IQueryable<dynamic>> funQuery, params Metadata[] metadata)
         {
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
             dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery, CRUDTableType, metadata));
         }
 
-        public void AddQuery(string QueryName, Func<T, IQueryable<dynamic>> funQuery, Action<Metadata> OnMetadataGenerated)
+        public void AddQuery(string QueryName, Func<T, IServiceProvider, IQueryable<dynamic>> funQuery, Action<Metadata> OnMetadataGenerated)
         {
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
             dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery, OnMetadataGenerated));
         }
-        public void AddQuery(string QueryName, Type CRUDTableType, Func<T, IQueryable<dynamic>> funQuery, Action<Metadata> OnMetadataGenerated)
+        public void AddQuery(string QueryName, Type CRUDTableType, Func<T, IServiceProvider, IQueryable<dynamic>> funQuery, Action<Metadata> OnMetadataGenerated)
         {
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
@@ -56,30 +57,30 @@ namespace a2n.DynData
         public void AddQuery<TResult>(Func<T, IQueryable<TResult>> funQuery, params Metadata[] metadata)
         {
             string QueryName = typeof(TResult).Name;
-            if(dicQueryList.ContainsKey(QueryName))
+            if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
-            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, metadata));
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IServiceProvider, IQueryable<dynamic>>, metadata));
         }
-        public void AddQuery<TResult>(Type CRUDTableType, Func<T, IQueryable<TResult>> funQuery, params Metadata[] metadata)
+        public void AddQuery<TResult>(Type CRUDTableType, Func<T, IServiceProvider, IQueryable<TResult>> funQuery, params Metadata[] metadata)
         {
             string QueryName = typeof(TResult).Name;
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
-            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, CRUDTableType, metadata));
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IServiceProvider, IQueryable<dynamic>>, CRUDTableType, metadata));
         }
-        public void AddQuery<TResult>(Func<T, IQueryable<TResult>> funQuery, Action<Metadata> OnMetadataGenerated)
+        public void AddQuery<TResult>(Func<T, IServiceProvider, IQueryable<TResult>> funQuery, Action<Metadata> OnMetadataGenerated)
         {
             string QueryName = typeof(TResult).Name;
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
-            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, OnMetadataGenerated));
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IServiceProvider, IQueryable<dynamic>>, OnMetadataGenerated));
         }
-        public void AddQuery<TResult>(Type CRUDTableType, Func<T, IQueryable<TResult>> funQuery, Action<Metadata> OnMetadataGenerated)
+        public void AddQuery<TResult>(Type CRUDTableType, Func<T, IServiceProvider, IQueryable<TResult>> funQuery, Action<Metadata> OnMetadataGenerated)
         {
             string QueryName = typeof(TResult).Name;
             if (dicQueryList.ContainsKey(QueryName))
                 throw new Exception($"Duplicate query name {QueryName}");
-            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IQueryable<dynamic>>, CRUDTableType, OnMetadataGenerated));
+            dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery as Func<T, IServiceProvider, IQueryable<dynamic>>, CRUDTableType, OnMetadataGenerated));
         }
 
 
@@ -100,55 +101,55 @@ namespace a2n.DynData
             if (dicQueryList.ContainsKey(QueryName))
                 dicQueryList.Remove(QueryName);
         }
-        public IQueryable<dynamic> GetQuery(T db, string QueryName)
+        public IQueryable<dynamic> GetQuery(T db, IServiceProvider provider, string QueryName)
         {
-            return dicQueryList[QueryName].Handler(db);
+            return dicQueryList[QueryName].Handler(db, provider);
         }
-        public Metadata[] GetMetadata(T db, string QueryName)
+        public Metadata[] GetMetadata(T db, IServiceProvider provider, string QueryName)
         {
             var tpl = dicQueryList[QueryName];
             var results = tpl.Metadata;
             if (results == null)
             {
                 List<Metadata> metaLst = new List<Metadata>();
-                var piArr = dicQueryList[QueryName].GetProperties(db);
+                var piArr = dicQueryList[QueryName].GetProperties(db, provider);
                 results = (from pi in piArr
                            select new Metadata(pi, tpl.OnMetadataGenerated)).ToArray();
             }
             return results;
         }
-        public PropertyInfo[] GetProperties(T db, string QueryName)
+        public PropertyInfo[] GetProperties(T db, IServiceProvider provider, string QueryName)
         {
-            return dicQueryList[QueryName].GetProperties(db);
+            return dicQueryList[QueryName].GetProperties(db, provider);
         }
-        public Type GetValueType(T db, string QueryName)
+        public Type GetValueType(T db, IServiceProvider provider, string QueryName)
         {
-            return dicQueryList[QueryName].GetValueType(db);
+            return dicQueryList[QueryName].GetValueType(db, provider);
         }
         public Type GetCRUDTableType(string QueryName)
         {
             return dicQueryList[QueryName].GetCRUDTableType();
         }
 
-        public dynamic FindByKey(T db, string QueryName, string jsonKeyValues)
+        public dynamic FindByKey(T db, IServiceProvider provider, string QueryName, string jsonKeyValues)
         {
             var jKey = JObject.Parse(jsonKeyValues);
-            return FindByKey(db, QueryName, jKey);
+            return FindByKey(db, provider, QueryName, jKey);
         }
-        public dynamic FindByKey(T db, string QueryName, System.Text.Json.JsonElement keyValues)
+        public dynamic FindByKey(T db, IServiceProvider provider, string QueryName, System.Text.Json.JsonElement keyValues)
         {
             var jKey = JObject.Parse(keyValues.ToString());
-            return FindByKey(db, QueryName, jKey);
+            return FindByKey(db, provider, QueryName, jKey);
         }
-        public dynamic FindByKey(T db, string QueryName, JObject jKey)
+        public dynamic FindByKey(T db, IServiceProvider provider, string QueryName, JObject jKey)
         {
             ExpressionRule rootRule = new ExpressionRule() { IsBracket = true, LogicalOperator = ExpressionLogicalOperator.And };
-            var valueType = this.GetValueType(db, QueryName);
-            var metaArr = this.GetMetadata(db, QueryName);
+            var valueType = this.GetValueType(db, provider, QueryName);
+            var metaArr = this.GetMetadata(db, provider, QueryName);
             var pkValues = metaArr.Where(t => t.IsPrimaryKey && jKey.ContainsKey(t.FieldName)).Select(t => new { Type = t.PropertyInfo.PropertyType, Name = t.FieldName, Value = jKey[t.FieldName] }).ToArray();
             if (pkValues.Length == 0)
                 return null;
-            var qry = this.GetQuery(db, QueryName);
+            var qry = this.GetQuery(db, provider, QueryName);
             foreach (var pk in pkValues)
             {
                 rootRule.AddChild(new ExpressionRule()
@@ -168,12 +169,12 @@ namespace a2n.DynData
                 return null;
         }
 
-        public IQueryable<dynamic> GetQuery(T db, string QueryName, params ExpressionRule[] rules)
+        public IQueryable<dynamic> GetQuery(T db, IServiceProvider provider, string QueryName, params ExpressionRule[] rules)
         {
             if (HasQueryName(QueryName))
             {
-                var qry = GetQuery(db, QueryName);
-                var viewType = GetValueType(db, QueryName);
+                var qry = GetQuery(db, provider, QueryName);
+                var viewType = GetValueType(db, provider, QueryName);
                 if (rules != null && rules.Length > 0)
                 {
                     foreach (var rule in rules)
@@ -190,15 +191,17 @@ namespace a2n.DynData
 
     }
 
+
     public class QueryMeta<T>
         where T : DbContext
     {
-        private PropertyInfo[] _properties;
-        private Type _valueType;
-        private Type _CRUDTableType;
+        protected PropertyInfo[] _properties;
+        protected Type _valueType;
+        protected Type _CRUDTableType;
 
-        public Func<T, IQueryable<dynamic>> Handler { get; private set; }
-        public Action<Metadata> OnMetadataGenerated { get; private set; }
+        //public Func<T, IQueryable<dynamic>> Handler { get; protected set; }
+        public Func<T, IServiceProvider, IQueryable<dynamic>> Handler { get; protected set; }
+        public Action<Metadata> OnMetadataGenerated { get; protected set; }
         public Metadata[] Metadata { get; set; }
 
         public string[] PrimaryKeyNames { get; set; }
@@ -214,11 +217,11 @@ namespace a2n.DynData
             }
         }
 
-        public Type GetValueType(T db)
+        public Type GetValueType(T db, IServiceProvider provider)
         {
             if (_valueType == null)
             {
-                var dynamicType = Handler(db).GetType();
+                var dynamicType = Handler(db, provider).GetType();
                 _valueType = dynamicType.GenericTypeArguments[0];
             }
             return _valueType;
@@ -227,47 +230,49 @@ namespace a2n.DynData
         {
             return _CRUDTableType;
         }
-        public PropertyInfo[] GetProperties(T db)
+        public PropertyInfo[] GetProperties(T db, IServiceProvider provider)
         {
             if (_properties == null)
             {
-                var argType = GetValueType(db);
+                var argType = GetValueType(db, provider);
                 _properties = argType.GetProperties().Where(t => t.PropertyType.Namespace == "System").ToArray();
             }
             return _properties;
         }
-        public QueryMeta(Func<T, IQueryable<dynamic>> Handler)
+
+        public QueryMeta(Func<T, IServiceProvider, IQueryable<dynamic>> Handler)
         {
             this.Handler = Handler;
         }
-        public QueryMeta(Func<T, IQueryable<dynamic>> Handler, Metadata[] Metadata)
-        {
-            this.Handler = Handler;
-            if (Metadata != null && Metadata.Length > 0)
-                this.Metadata = Metadata;
-        }
-        public QueryMeta(Func<T, IQueryable<dynamic>> Handler, Type CRUDTableType)
-        {
-            this._CRUDTableType = CRUDTableType;
-            this.Handler = Handler;
-        }
-        public QueryMeta(Func<T, IQueryable<dynamic>> Handler, Type CRUDTableType, Metadata[] Metadata)
+        public QueryMeta(Func<T, IServiceProvider, IQueryable<dynamic>> Handler, Metadata[] Metadata)
         {
             this.Handler = Handler;
             if (Metadata != null && Metadata.Length > 0)
                 this.Metadata = Metadata;
+        }
+        public QueryMeta(Func<T, IServiceProvider, IQueryable<dynamic>> Handler, Type CRUDTableType)
+        {
+            this._CRUDTableType = CRUDTableType;
+            this.Handler = Handler;
+        }
+        public QueryMeta(Func<T, IServiceProvider, IQueryable<dynamic>> Handler, Type CRUDTableType, Metadata[] Metadata)
+        {
+            this.Handler = Handler;
+            if (Metadata != null && Metadata.Length > 0)
+                this.Metadata = Metadata;
             this._CRUDTableType = CRUDTableType;
         }
-        public QueryMeta(Func<T, IQueryable<dynamic>> Handler, Action<Metadata> OnMetadataGenerated)
+        public QueryMeta(Func<T, IServiceProvider, IQueryable<dynamic>> Handler, Action<Metadata> OnMetadataGenerated)
         {
             this.Handler = Handler;
             this.OnMetadataGenerated = OnMetadataGenerated;
         }
-        public QueryMeta(Func<T, IQueryable<dynamic>> Handler, Type CRUDTableType, Action<Metadata> OnMetadataGenerated)
+        public QueryMeta(Func<T, IServiceProvider, IQueryable<dynamic>> Handler, Type CRUDTableType, Action<Metadata> OnMetadataGenerated)
         {
             this._CRUDTableType = CRUDTableType;
             this.Handler = Handler;
             this.OnMetadataGenerated = OnMetadataGenerated;
         }
     }
+
 }
