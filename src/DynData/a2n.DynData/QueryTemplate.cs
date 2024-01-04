@@ -54,7 +54,7 @@ namespace a2n.DynData
             dicQueryList.Add(QueryName, new QueryMeta<T>(funQuery, CRUDTableType, OnMetadataGenerated));
         }
 
-        public void AddQuery<TResult>(Func<T, IQueryable<TResult>> funQuery, params Metadata[] metadata)
+        public void AddQuery<TResult>(Func<T, IServiceProvider, IQueryable<TResult>> funQuery, params Metadata[] metadata)
         {
             string QueryName = typeof(TResult).Name;
             if (dicQueryList.ContainsKey(QueryName))
