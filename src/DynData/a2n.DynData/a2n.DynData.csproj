@@ -8,11 +8,11 @@
     <Authors>Anwar Minarso</Authors>
     <Description>Dynamic Data for EF</Description>
     <PackageProjectUrl>https://github.com/anwarminarso/DynData</PackageProjectUrl>
-    <Copyright>Anwar Minarso @ 2021-2023</Copyright>
+    <Copyright>Anwar Minarso @ 2021-2024</Copyright>
     <RepositoryUrl>https://github.com/anwarminarso/DynData</RepositoryUrl>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <DefineConstants>$(DefineConstants);ENABLE_MYSQL</DefineConstants>
-    <Version>8.0.0</Version>
+    <Version>8.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,10 +24,10 @@
   <Choose>
     <When Condition="'$(TargetFramework)' == 'net6.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.25" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.25" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.25" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.25" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.26" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.26" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.26" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.26" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.22" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
@@ -35,10 +35,10 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net7.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.15" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.15" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.15" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.15" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
@@ -46,19 +46,10 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net8.0'">
       <ItemGroup>
-
-        <!--<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.14" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />-->
-
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0-beta.2" />

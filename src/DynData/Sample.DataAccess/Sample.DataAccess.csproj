@@ -4,7 +4,7 @@
     <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Copyright>Anwar Minarso @ 2021-2023</Copyright>
+    <Copyright>Anwar Minarso @ 2021-2024</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,12 +14,12 @@
   <Choose>
     <When Condition="'$(TargetFramework)' == 'net6.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.25">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.26">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.25" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.25">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.26" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.26">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
@@ -27,12 +27,12 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net7.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.14">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.15">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.14">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.15" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.15">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
@@ -40,12 +40,12 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net8.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.1">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
