@@ -13,6 +13,7 @@ namespace System.Linq
     public static class LinqExtension
     {
         private static MethodInfo mtdOrderByGeneric = null;
+        private static MethodInfo mtdOrderBy = null;
         private static MethodInfo mtdThenByGeneric = null;
         private static MethodInfo mtdCreateExpression = null;
         private static MethodInfo mtdCreateSelectExpression = null;
@@ -33,6 +34,7 @@ namespace System.Linq
         static LinqExtension()
         {
             mtdOrderByGeneric = typeof(LinqExtension).GetMethods().Where(t => t.Name == "OrderBy" && t.IsGenericMethod).FirstOrDefault();
+            mtdOrderBy = typeof(Enumerable).GetMethods().FirstOrDefault(m => m.Name == "OrderBy" && m.GetParameters().Length == 2);
             mtdThenByGeneric = typeof(LinqExtension).GetMethods().Where(t => t.Name == "ThenBy" && t.IsGenericMethod).FirstOrDefault();
             mtdCreateExpression = typeof(LinqExtension).GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).Where(t => t.Name == "CreateExpression" && t.IsGenericMethod).FirstOrDefault();
             mtdCreateSelectExpression = typeof(LinqExtension).GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).Where(t => t.Name == "CreateSelectExpression" && t.IsGenericMethod).FirstOrDefault();
@@ -135,6 +137,23 @@ namespace System.Linq
         {
             var mtd = mtdOrderByGeneric.MakeGenericMethod(query.ElementType);
             return mtd.Invoke(null, new object[] { query, key, ascending }) as IQueryable<dynamic>;
+        }
+
+        public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> query, string name)
+        {
+            var propInfo = getPropertyInfo(typeof(T), name);
+            var expr = getOrderExpression(typeof(T), propInfo);
+
+            var genericMethod = mtdOrderBy.MakeGenericMethod(typeof(T), propInfo.PropertyType);
+            return (IEnumerable<T>)genericMethod.Invoke(null, new object[] { query, expr.Compile() });
+        }
+        public static IQueryable<T> OrderBy<T>(this IQueryable<T> query, string name)
+        {
+            var propInfo = getPropertyInfo(typeof(T), name);
+            var expr = getOrderExpression(typeof(T), propInfo);
+
+            var genericMethod = mtdOrderBy.MakeGenericMethod(typeof(T), propInfo.PropertyType);
+            return (IQueryable<T>)genericMethod.Invoke(null, new object[] { query, expr });
         }
         public static IQueryable<TSource> ThenBy<TSource>(this IQueryable<TSource> query, string key, bool ascending = true)
         {
@@ -1059,14 +1078,6 @@ namespace System.Linq
         }
         
         
-        private static string getAlias(int idx)
-        {
-            return new string((char)(idx + 97), 1);
-        }
-        private static int getAliasIndex(string alias)
-        {
-            return (int)alias[0] - 97;
-        }
         private static Expression<Func<T, dynamic>> CreateSelectExpression<T>(params string[] fieldNames)
         {
             if (fieldNames == null || fieldNames.Length == 0)
@@ -1116,6 +1127,30 @@ namespace System.Linq
 
 
 
+        private static string getAlias(int idx)
+        {
+            return new string((char)(idx + 97), 1);
+        }
+        private static int getAliasIndex(string alias)
+        {
+            return (int)alias[0] - 97;
+        }
+        private static PropertyInfo getPropertyInfo(Type objType, string name)
+        {
+            var properties = objType.GetProperties();
+            var matchedProperty = properties.FirstOrDefault(p => p.Name == name);
+            if (matchedProperty == null)
+                throw new ArgumentException("name");
+
+            return matchedProperty;
+        }
+        private static LambdaExpression getOrderExpression(Type objType, PropertyInfo pi)
+        {
+            var paramExpr = Expression.Parameter(objType);
+            var propAccess = Expression.PropertyOrField(paramExpr, pi.Name);
+            var expr = Expression.Lambda(propAccess, paramExpr);
+            return expr;
+        }
         public static void ExportToCSV(this IQueryable<object> query, Metadata[] metadataArr, StreamWriter writer)
         {
             bool firstField = true;
