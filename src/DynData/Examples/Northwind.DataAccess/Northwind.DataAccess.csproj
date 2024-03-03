@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(TargetFramework)' == 'net6.0'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.27" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.27" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.27" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.27" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.22" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.27">
+          <!--<PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+        </PackageReference>
+      </ItemGroup>
+    </When>
+    <When Condition="'$(TargetFramework)' == 'net7.0'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.16" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.16" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.16" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.16" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.16">
+          <!--<PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+        </PackageReference>
+      </ItemGroup>
+    </When>
+    <When Condition="'$(TargetFramework)' == 'net8.0'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.2">
+          <!--<PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+        </PackageReference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <ItemGroup>
+    <None Remove="NorthwindDbContext.cs.autogen.original" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\a2n.DynData\a2n.DynData.csproj" />
+  </ItemGroup>
+</Project>

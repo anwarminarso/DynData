@@ -1,0 +1,9 @@
+﻿#Before execute this command
+#Set this project as Startup project (In solution explorer)
+#Set this project as default project (in package manager console)
+#Compile first (make sure there is no compilation error)
+#Execute this command on package manager console 
+#Don`t forget to change connection string
+#WARNING: ALL FILE on this root project will be replace with autogerated files
+
+Scaffold-DbContext "Data Source=../DB/northwind.db" Microsoft.EntityFrameworkCore.Sqlite -Context NorthwindDbContext

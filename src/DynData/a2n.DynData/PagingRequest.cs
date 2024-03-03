@@ -21,7 +21,7 @@ namespace a2n.DynData
 
         [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string? orderBy { get; set; } = null;
+        public string orderBy { get; set; } = null;
 
         [SysJsonSerial.JsonIgnore(Condition = SysJsonSerial.JsonIgnoreCondition.WhenWritingNull)]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
