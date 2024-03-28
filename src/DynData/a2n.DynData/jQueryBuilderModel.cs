@@ -146,6 +146,7 @@ namespace a2n.DynData
                     //
                     dicValues["type"] = "datetime";
                     dicValues["input"] = "text";
+                    dicValues["placeholder"] = "YYYY-MM-DD HH:MM:SS";
                     //dicValues["input"] = "datetime-local";
                     //dicValues["validation"] = new { format = "YYYY/MM/DD" };
                     //dicValues["plugin"] = "datepicker";
@@ -283,12 +284,42 @@ namespace a2n.DynData
     }
     public class jQueryBuilderRuleModel : jQueryBuilderBaseRuleItemModel
     {
+        private static string[] builtInProps = new string[] { "id", "field", "type", "input", "operator", "value" };
+
         public string id { get; set; }
         public string field { get; set; }
         public string type { get; set; }
         public string input { get; set; }
         public string @operator { get; set; }
         public object value { get; set; }
+
+        public object this[string key]
+        {
+            get
+            {
+                if (builtInProps.Contains(key))
+                    return typeof(jQueryBuilderRuleModel).GetProperty(key).GetValue(this);
+                else
+                {
+                    if (additionalData.ContainsKey(key))
+                        return additionalData[key];
+                    else
+                        return null;
+                }
+            }
+            set
+            {
+                if (builtInProps.Contains(key))
+                    typeof(jQueryBuilderRuleModel).GetProperty(key).SetValue(this, value);
+                else if (additionalData.ContainsKey(key))
+                    additionalData[key] = value;
+                else
+                    additionalData.Add(key, value);
+            }
+        }
+
+        [JsonExtensionData]
+        public Dictionary<string, object> additionalData { get; set; } = new Dictionary<string, object>();
     }
     public class jQueryBuilderUserData
     {
