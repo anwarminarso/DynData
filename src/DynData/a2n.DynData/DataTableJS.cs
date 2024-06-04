@@ -704,119 +704,162 @@ namespace a2n.DynData
                     JArray values = null;
                     List<string> valueQry = new List<string>();
                     List<ExpressionRule> childFilters = new List<ExpressionRule>();
+                    bool RequireIn = false;
                     if (prop.Value.Type == JTokenType.Array)
+                    {
                         values = prop.Value as JArray;
+                        RequireIn = true;
+                    }
                     else
                     {
                         values = new JArray();
                         values.Add(prop.Value);
                     }
-                    foreach (JValue value in values)
+                    if (RequireIn)
                     {
-                        var val = value.Value.ToString();
-                        ExpressionRule childFilter = null;
-                        if (val.StartsWith(">"))
+                        foreach (JValue value in values)
                         {
-                            var opr = ExpressionOperator.LessThan;
-                            if (val.StartsWith(">="))
+                            var val = value.Value.ToString();
+                            if (val.StartsWith(">") || val.StartsWith("<") || val.StartsWith("="))
                             {
-                                val = val.Substring(2, val.Length - 2).Trim();
-                                opr = ExpressionOperator.LessThanOrEqual;
+                                RequireIn = false;
+                                break;
                             }
-                            else
-                                val = val.Substring(1, val.Length - 1).Trim();
-
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = opr,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
                         }
-                        else if (val.StartsWith("<"))
-                        {
-                            var opr = ExpressionOperator.GreaterThan;
-                            if (val.StartsWith("<="))
-                            {
-                                val = val.Substring(2, val.Length - 2).Trim();
-                                opr = ExpressionOperator.GreaterThanOrEqual;
-                            }
-                            else
-                                val = val.Substring(1, val.Length - 1).Trim();
+                    }
 
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = opr,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        else if (val.StartsWith("="))
+                    if (RequireIn)
+                    {
+                        var ruleIn = new ExpressionRule()
                         {
-                            val = val.Substring(1, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
+                            IsBracket = true,
+                            LogicalOperator = ExpressionLogicalOperator.And
+                        };
+                        foreach (JValue value in values)
+                        {
+                            var val = value.Value.ToString().Trim();
+                            var childFilter = new ExpressionRule()
                             {
                                 IsBracket = false,
                                 Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.Name,
+                                LogicalOperator = ExpressionLogicalOperator.Or,
+                                ReferenceFieldName = prop.Name,
                                 ReferenceFieldType = meta.PropertyType,
                                 CompareFieldValue = val
                             };
+                            ruleIn.AddChild(childFilter);
                         }
-                        else if (val.StartsWith("%"))
+                        childFilters.Add(ruleIn);
+                    }
+                    else
+                    {
+                        foreach (JValue value in values)
                         {
-                            var opr = ExpressionOperator.EndsWith;
-                            if (val.EndsWith("%"))
+                            var val = value.Value.ToString();
+                            ExpressionRule childFilter = null;
+                            if (val.StartsWith(">"))
                             {
-                                val = val.Substring(1, val.Length - 2).Trim();
-                                opr = ExpressionOperator.Contains;
+                                var opr = ExpressionOperator.LessThan;
+                                if (val.StartsWith(">="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.LessThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("<"))
+                            {
+                                var opr = ExpressionOperator.GreaterThan;
+                                if (val.StartsWith("<="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("="))
+                            {
+                                val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.Equal,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("%"))
+                            {
+                                var opr = ExpressionOperator.EndsWith;
+                                if (val.EndsWith("%"))
+                                {
+                                    val = val.Substring(1, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.Contains;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.EndsWith("%"))
+                            {
+                                val = val.Substring(0, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.StartsWith,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
                             }
                             else
-                                val = val.Substring(1, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
                             {
-                                IsBracket = false,
-                                Operator = opr,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
+                                val = val.Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.Equal,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.Name,
+                                    ReferenceFieldType = meta.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            childFilters.Add(childFilter);
                         }
-                        else if (val.EndsWith("%"))
-                        {
-                            val = val.Substring(0, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.StartsWith,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        else
-                        {
-                            val = val.Trim();
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        childFilters.Add(childFilter);
                     }
                     foreach (var item in childFilters)
                         externalFilterRule.AddChild(item);
@@ -895,118 +938,160 @@ namespace a2n.DynData
                     JArray values = null;
                     List<string> valueQry = new List<string>();
                     List<ExpressionRule> childFilters = new List<ExpressionRule>();
+                    bool RequireIn = false;
                     if (prop.Value.Type == JTokenType.Array)
+                    {
                         values = prop.Value as JArray;
+                        RequireIn = true;
+                    }
                     else
                     {
                         values = new JArray();
                         values.Add(prop.Value);
                     }
-                    foreach (JValue value in values)
+                    if (RequireIn)
                     {
-                        var val = value.Value.ToString();
-                        ExpressionRule childFilter = null;
-                        if (val.StartsWith(">"))
+                        foreach (JValue value in values)
                         {
-                            var opr = ExpressionOperator.LessThan;
-                            if (val.StartsWith(">="))
+                            var val = value.Value.ToString();
+                            if (val.StartsWith(">") || val.StartsWith("<") || val.StartsWith("="))
                             {
-                                val = val.Substring(2, val.Length - 2).Trim();
-                                opr = ExpressionOperator.LessThanOrEqual;
+                                RequireIn = false;
+                                break;
                             }
-                            else
-                                val = val.Substring(1, val.Length - 1).Trim();
+                        }
+                    }
+                    if (RequireIn)
+                    {
+                        var ruleIn = new ExpressionRule()
+                        {
+                            IsBracket = true,
+                            LogicalOperator = ExpressionLogicalOperator.And
+                        };
+                        foreach (JValue value in values)
+                        {
+                            var val = value.Value.ToString().Trim();
+                            var childFilter = new ExpressionRule()
+                            {
+                                IsBracket = false,
+                                Operator = ExpressionOperator.Equal,
+                                LogicalOperator = ExpressionLogicalOperator.Or,
+                                ReferenceFieldName = meta.FieldName,
+                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                CompareFieldValue = val
+                            };
+                            ruleIn.AddChild(childFilter);
+                        }
+                        childFilters.Add(ruleIn);
+                    }
+                    else
+                    {
+                        foreach (JValue value in values)
+                        {
+                            var val = value.Value.ToString();
+                            ExpressionRule childFilter = null;
+                            if (val.StartsWith(">"))
+                            {
+                                var opr = ExpressionOperator.LessThan;
+                                if (val.StartsWith(">="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.LessThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
 
-                            childFilter = new ExpressionRule()
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("<"))
                             {
-                                IsBracket = false,
-                                Operator = opr,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        else if (val.StartsWith("<"))
-                        {
-                            var opr = ExpressionOperator.GreaterThan;
-                            if (val.StartsWith("<="))
+                                var opr = ExpressionOperator.GreaterThan;
+                                if (val.StartsWith("<="))
+                                {
+                                    val = val.Substring(2, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("="))
                             {
-                                val = val.Substring(2, val.Length - 2).Trim();
-                                opr = ExpressionOperator.GreaterThanOrEqual;
+                                val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.Equal,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.StartsWith("%"))
+                            {
+                                var opr = ExpressionOperator.EndsWith;
+                                if (val.EndsWith("%"))
+                                {
+                                    val = val.Substring(1, val.Length - 2).Trim();
+                                    opr = ExpressionOperator.Contains;
+                                }
+                                else
+                                    val = val.Substring(1, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = opr,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
+                            }
+                            else if (val.EndsWith("%"))
+                            {
+                                val = val.Substring(0, val.Length - 1).Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.EndsWith,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
                             }
                             else
-                                val = val.Substring(1, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
                             {
-                                IsBracket = false,
-                                Operator = opr,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        else if (val.StartsWith("="))
-                        {
-                            val = val.Substring(1, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        else if (val.StartsWith("%"))
-                        {
-                            var opr = ExpressionOperator.EndsWith;
-                            if (val.EndsWith("%"))
-                            {
-                                val = val.Substring(1, val.Length - 2).Trim();
-                                opr = ExpressionOperator.Contains;
+                                val = val.Trim();
+                                childFilter = new ExpressionRule()
+                                {
+                                    IsBracket = false,
+                                    Operator = ExpressionOperator.Equal,
+                                    LogicalOperator = ExpressionLogicalOperator.And,
+                                    ReferenceFieldName = meta.FieldName,
+                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
+                                    CompareFieldValue = val
+                                };
                             }
-                            else
-                                val = val.Substring(1, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = opr,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
+                            childFilters.Add(childFilter);
                         }
-                        else if (val.EndsWith("%"))
-                        {
-                            val = val.Substring(0, val.Length - 1).Trim();
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.EndsWith,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        else
-                        {
-                            val = val.Trim();
-                            childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.And,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                        }
-                        childFilters.Add(childFilter);
                     }
                     foreach (var item in childFilters)
                         externalFilterRule.AddChild(item);
