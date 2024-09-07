@@ -487,7 +487,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase :  ExpressionOperator.Contains,
+                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
                             ReferenceFieldName = meta.FieldName,
                             ReferenceFieldType = meta.PropertyInfo.PropertyType,
                             CompareFieldObject = search.value
@@ -628,6 +628,18 @@ namespace a2n.DynData
             if (length > 0)
                 pageIndex = start / length;
             var qry = ToQueryable(query);
+            if (length == -1)
+            {
+                return new PagingResult<T>()
+                {
+                    pageIndex = 0,
+                    pageSize = -1,
+                    context = null,
+                    items = qry.ToArray(),
+                    totalPages = 1,
+                    totalRows = qry.Count()
+                };
+            }
             return qry.ToPagingResult(length, pageIndex);
         }
         public PagingResult<dynamic> ToPagingResult(IQueryable<dynamic> query, Type valueType)
@@ -641,6 +653,18 @@ namespace a2n.DynData
             if (length > 0)
                 pageIndex = start / length;
             var qry = ToQueryable(query, valueType, propArr);
+            if (length == -1)
+            {
+                return new PagingResult<dynamic>()
+                {
+                    pageIndex = 0,
+                    pageSize = -1,
+                    context = null,
+                    items = qry.ToArray(),
+                    totalPages = 1,
+                    totalRows = qry.Count()
+                };
+            }
             return qry.ToPagingResult(length, pageIndex);
         }
         public PagingResult<dynamic> ToPagingResult(IQueryable<dynamic> query, Type valueType, Metadata[] metaArr)
@@ -649,6 +673,18 @@ namespace a2n.DynData
             if (length > 0)
                 pageIndex = start / length;
             var qry = ToQueryable(query, valueType, metaArr);
+            if (length == -1)
+            {
+                return new PagingResult<dynamic>()
+                {
+                    pageIndex = 0,
+                    pageSize = -1,
+                    context = null,
+                    items = qry.ToArray(),
+                    totalPages = 1,
+                    totalRows = qry.Count()
+                };
+            }
             return qry.ToPagingResult(length, pageIndex);
         }
     }
@@ -884,7 +920,7 @@ namespace a2n.DynData
                         {
                             IsBracket = false,
                             LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains :  EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
+                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
                             ReferenceFieldName = prop.Name,
                             ReferenceFieldType = prop.PropertyType,
                             CompareFieldObject = globalSearch
