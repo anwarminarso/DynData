@@ -198,6 +198,7 @@ namespace a2n.DynData
             return new
             {
                 automationRuleType = type.Name,
+                allow_empty = true,
                 filters = objLst.ToArray()
             };
         }

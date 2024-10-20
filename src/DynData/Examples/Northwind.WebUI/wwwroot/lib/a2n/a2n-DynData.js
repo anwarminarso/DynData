@@ -644,7 +644,7 @@ a2n.dyndata.QueryBuilder.prototype = {
             let $frm = $(`#frm${_this.ID}`);
             let $qb = $(`#container${_this.ID}`)
             let qb = $qb.data('queryBuilder');
-            if (qb && qb.validate({ skip_empty: false })) {
+            if (qb && qb.validate({ skip_empty: true })) {
                 _this.Apply();
             }
         });
