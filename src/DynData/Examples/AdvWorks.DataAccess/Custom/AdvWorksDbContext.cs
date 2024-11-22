@@ -26,8 +26,10 @@ namespace AdvWorks.DataAccess
             {
                 case DatabaseProvider.Postgres:
                     throw new NotImplementedException("");
+#if !DISABLE_MYSQL
                 case DatabaseProvider.MySql:
                     throw new NotImplementedException("");
+#endif
                 case DatabaseProvider.SqlServer:
                     SqlServerModelCreating(modelBuilder);
                     break;
