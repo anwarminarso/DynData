@@ -22,7 +22,9 @@ namespace a2n.DynData
     {
         SqlServer,
         Postgres,
+#if !DISABLE_MYSQL
         MySql,
+#endif
         Sqlite
     }
 }
