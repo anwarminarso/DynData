@@ -535,7 +535,7 @@ a2n.dyndata.DataTable.prototype = {
                 break;
             case "Delete":
                 {
-                    a2n.showConfirmDelete(
+                    a2n.showConfirm(
                         function (result) {
                             if (result) {
                                 let _apiDeleteUrl = _this.dynOptions.apiDeleteUrl ?? a2n.dyndata.Configuration.getApiDelete(_this.controller, _this.dynOptions.crudTableName);
@@ -647,6 +647,9 @@ a2n.dyndata.QueryBuilder.prototype = {
             if (qb && qb.validate({ skip_empty: true })) {
                 _this.Apply();
             }
+        });
+        $(`#mdl${this.ID}`).on('show.bs.modal', function (e) {
+            $(this).appendTo("body");
         });
 
         this._IsRendered = true;
@@ -943,12 +946,17 @@ a2n.dyndata.Form.prototype = {
 
             if ($frm[0].checkValidity() === false) {
                 $frm.addClass('was-validated');
-                event.preventDefault();
-                event.stopPropagation();
+                evt.preventDefault();
+                evt.stopPropagation();
                 return;
             }
             evt.data.Submit();
         });
+
+        $(`#mdl${this.ID}`).on('show.bs.modal', function (e) {
+            $(this).appendTo("body");
+        });
+
         this._IsRendered = true;
     },
     Submit: function () {
