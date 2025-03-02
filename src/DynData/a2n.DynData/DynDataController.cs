@@ -47,29 +47,26 @@ namespace a2n.DynData
 
         [Route("{viewName}/datatable")]
         [HttpPost]
-        public virtual Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
+        public virtual async Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
         {
-            return Task.Run(() =>
+            IQueryable<dynamic> qry = null;
+            Type valueType = valueType = db.GetTableType(viewName);
+            Metadata[] metaArr = null;
+
+
+            if (valueType != null)
             {
-                IQueryable<dynamic> qry = null;
-                Type valueType = valueType = db.GetTableType(viewName);
-                Metadata[] metaArr = null;
-
-
-                if (valueType != null)
-                {
-                    metaArr = db.GetMetadata(viewName);
-                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
-                }
-                if (qry != null)
-                {
-                    var page = req.ToPagingResult(qry, valueType, metaArr);
-                    var resp = new DataTableJSResponse(req, page);
-                    return resp;
-                }
-                else
-                    return new DataTableJSResponse(req, new PagingResult<dynamic>());
-            });
+                metaArr = db.GetMetadata(viewName);
+                qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+            }
+            if (qry != null)
+            {
+                var page = await req.ToPagingResultAsync(qry, valueType, metaArr);
+                var resp = new DataTableJSResponse(req, page);
+                return resp;
+            }
+            else
+                return new DataTableJSResponse(req, new PagingResult<dynamic>());
         }
 
 
@@ -116,24 +113,21 @@ namespace a2n.DynData
 
         [Route("{viewName}/list")]
         [HttpPost]
-        public virtual Task<PagingResult<dynamic>> GetList(string viewName, PagingRequest req)
+        public virtual async Task<PagingResult<dynamic>> GetList(string viewName, PagingRequest req)
         {
-            return Task.Run(() =>
+            IQueryable<dynamic> qry = null;
+            qry = db.Query(viewName, req.rules);
+            if (qry != null)
             {
-                IQueryable<dynamic> qry = null;
-                qry = db.Query(viewName, req.rules);
-                if (qry != null)
+                if (!string.IsNullOrEmpty(req.orderBy))
                 {
-                    if (!string.IsNullOrEmpty(req.orderBy))
-                    {
-                        var asc = req.ascending.HasValue ? req.ascending.Value : true;
-                        qry = qry.OrderBy(req.orderBy, asc);
-                    }
-                    return qry.ToPagingResult(req.pageSize, req.pageIndex);
+                    var asc = req.ascending.HasValue ? req.ascending.Value : true;
+                    qry = qry.OrderBy(req.orderBy, asc);
                 }
-                else
-                    return new PagingResult<dynamic>();
-            });
+                return await qry.ToPagingResultAsync(req.pageSize, req.pageIndex);
+            }
+            else
+                return new PagingResult<dynamic>();
         }
 
         [Route("{viewName}/export")]
@@ -182,33 +176,30 @@ namespace a2n.DynData
 
         [Route("{viewName}/dropdown")]
         [HttpGet]
-        public virtual Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
+        public virtual async Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
         {
-            return Task.Run(() =>
+            IQueryable<dynamic> qry = null;
+            Type valueType = null;
+            ExpressionRule rule = null;
+            if (!string.IsNullOrEmpty(search))
             {
-                IQueryable<dynamic> qry = null;
-                Type valueType = null;
-                ExpressionRule rule = null;
-                if (!string.IsNullOrEmpty(search))
+                rule = new ExpressionRule()
                 {
-                    rule = new ExpressionRule()
-                    {
-                        IsBracket = false,
-                        ReferenceFieldName = labelField,
-                        Operator = ExpressionOperator.Contains,
-                        CompareFieldValue = search
-                    };
-                }
-                valueType = db.GetTableType(viewName);
-                qry = db.Query(viewName, rule);
-                if (qry != null)
-                {
-                    //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
-                    return qry.ToPagingResult(pageSize, pageIndex);
-                }
-                else
-                    return new PagingResult<dynamic>();
-            });
+                    IsBracket = false,
+                    ReferenceFieldName = labelField,
+                    Operator = ExpressionOperator.Contains,
+                    CompareFieldValue = search
+                };
+            }
+            valueType = db.GetTableType(viewName);
+            qry = db.Query(viewName, rule);
+            if (qry != null)
+            {
+                //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
+                return await qry.ToPagingResultAsync(pageSize, pageIndex);
+            }
+            else
+                return new PagingResult<dynamic>();
         }
 
 
@@ -364,37 +355,34 @@ namespace a2n.DynData
 
         [Route("{viewName}/datatable")]
         [HttpPost]
-        public virtual Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
+        public virtual async Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
         {
-            return Task.Run(() =>
+            IQueryable<dynamic> qry = null;
+            Type valueType = null;
+            Metadata[] metaArr = null;
+            if (qryTpl.HasQueryName(viewName))
             {
-                IQueryable<dynamic> qry = null;
-                Type valueType = null;
-                Metadata[] metaArr = null;
-                if (qryTpl.HasQueryName(viewName))
+                qry = qryTpl.GetQuery(db, provider, viewName);
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                metaArr = qryTpl.GetMetadata(db, provider, viewName);
+            }
+            else
+            {
+                valueType = db.GetTableType(viewName);
+                if (valueType != null)
                 {
-                    qry = qryTpl.GetQuery(db, provider, viewName);
-                    valueType = qryTpl.GetValueType(db, provider, viewName);
-                    metaArr = qryTpl.GetMetadata(db, provider, viewName);
+                    metaArr = db.GetMetadata(viewName);
+                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
                 }
-                else
-                {
-                    valueType = db.GetTableType(viewName);
-                    if (valueType != null)
-                    {
-                        metaArr = db.GetMetadata(viewName);
-                        qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
-                    }
-                }
-                if (qry != null)
-                {
-                    var page = req.ToPagingResult(qry, valueType, metaArr);
-                    var resp = new DataTableJSResponse(req, page);
-                    return resp;
-                }
-                else
-                    return new DataTableJSResponse(req, new PagingResult<dynamic>());
-            });
+            }
+            if (qry != null)
+            {
+                var page = await req.ToPagingResultAsync(qry, valueType, metaArr);
+                var resp = new DataTableJSResponse(req, page);
+                return resp;
+            }
+            else
+                return new DataTableJSResponse(req, new PagingResult<dynamic>());
         }
 
 
@@ -451,27 +439,24 @@ namespace a2n.DynData
 
         [Route("{viewName}/list")]
         [HttpPost]
-        public virtual Task<PagingResult<dynamic>> GetList(string viewName, PagingRequest req)
+        public virtual async Task<PagingResult<dynamic>> GetList(string viewName, PagingRequest req)
         {
-            return Task.Run(() =>
+            IQueryable<dynamic> qry = null;
+            if (qryTpl.HasQueryName(viewName))
+                qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
+            else
+                qry = db.Query(viewName, req.rules);
+            if (qry != null)
             {
-                IQueryable<dynamic> qry = null;
-                if (qryTpl.HasQueryName(viewName))
-                    qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
-                else
-                    qry = db.Query(viewName, req.rules);
-                if (qry != null)
+                if (!string.IsNullOrEmpty(req.orderBy))
                 {
-                    if (!string.IsNullOrEmpty(req.orderBy))
-                    {
-                        var asc = req.ascending.HasValue ? req.ascending.Value : true;
-                        qry = qry.OrderBy(req.orderBy, asc);
-                    }
-                    return qry.ToPagingResult(req.pageSize, req.pageIndex);
+                    var asc = req.ascending.HasValue ? req.ascending.Value : true;
+                    qry = qry.OrderBy(req.orderBy, asc);
                 }
-                else
-                    return new PagingResult<dynamic>();
-            });
+                return await qry.ToPagingResultAsync(req.pageSize, req.pageIndex);
+            }
+            else
+                return new PagingResult<dynamic>();
         }
 
 
@@ -529,41 +514,38 @@ namespace a2n.DynData
         }
         [Route("{viewName}/dropdown")]
         [HttpGet]
-        public virtual Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
+        public virtual async Task<PagingResult<dynamic>> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
         {
-            return Task.Run(() =>
+            IQueryable<dynamic> qry = null;
+            Type valueType = null;
+            ExpressionRule rule = null;
+            if (!string.IsNullOrEmpty(search))
             {
-                IQueryable<dynamic> qry = null;
-                Type valueType = null;
-                ExpressionRule rule = null;
-                if (!string.IsNullOrEmpty(search))
+                rule = new ExpressionRule()
                 {
-                    rule = new ExpressionRule()
-                    {
-                        IsBracket = false,
-                        ReferenceFieldName = labelField,
-                        Operator = ExpressionOperator.Contains,
-                        CompareFieldValue = search
-                    };
-                }
-                if (qryTpl.HasQueryName(viewName))
-                {
-                    valueType = qryTpl.GetValueType(db, provider, viewName);
-                    qry = qryTpl.GetQuery(db, provider, viewName, rule);
-                }
-                else
-                {
-                    valueType = db.GetTableType(viewName);
-                    qry = db.Query(viewName, rule);
-                }
-                if (qry != null)
-                {
-                    //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
-                    return qry.ToPagingResult(pageSize, pageIndex);
-                }
-                else
-                    return new PagingResult<dynamic>();
-            });
+                    IsBracket = false,
+                    ReferenceFieldName = labelField,
+                    Operator = ExpressionOperator.Contains,
+                    CompareFieldValue = search
+                };
+            }
+            if (qryTpl.HasQueryName(viewName))
+            {
+                valueType = qryTpl.GetValueType(db, provider, viewName);
+                qry = qryTpl.GetQuery(db, provider, viewName, rule);
+            }
+            else
+            {
+                valueType = db.GetTableType(viewName);
+                qry = db.Query(viewName, rule);
+            }
+            if (qry != null)
+            {
+                //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
+                return await qry.ToPagingResultAsync(pageSize, pageIndex);
+            }
+            else
+                return new PagingResult<dynamic>();
         }
 
 
@@ -747,7 +729,7 @@ namespace a2n.DynData
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DataTableJSResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
+        public virtual async Task<IActionResult> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
         {
             if (!IsAllowed(DynDataAPIMethod.DataTable, viewName))
                 return new UnauthorizedResult();
@@ -772,7 +754,7 @@ namespace a2n.DynData
             if (qry != null)
             {
                 auth.ApplyRequest(this.HttpContext, db, viewName, req);
-                var page = req.ToPagingResult(qry, valueType, metaArr);
+                var page = await req.ToPagingResultAsync(qry, valueType, metaArr);
                 var resp = new DataTableJSResponse(req, page);
                 return Ok(resp);
             }
@@ -842,7 +824,7 @@ namespace a2n.DynData
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PagingResult<dynamic>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetList(string viewName, PagingRequest req)
+        public virtual async Task<IActionResult> GetList(string viewName, PagingRequest req)
         {
             if (!IsAllowed(DynDataAPIMethod.List, viewName))
                 return new UnauthorizedResult();
@@ -858,7 +840,7 @@ namespace a2n.DynData
                     var asc = req.ascending.HasValue ? req.ascending.Value : true;
                     qry = qry.OrderBy(req.orderBy, asc);
                 }
-                return Ok(qry.ToPagingResult(req.pageSize, req.pageIndex));
+                return Ok(await qry.ToPagingResultAsync(req.pageSize, req.pageIndex));
             }
             else
                 return Ok(new PagingResult<dynamic>());
@@ -928,7 +910,7 @@ namespace a2n.DynData
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PagingResult<dynamic>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public virtual IActionResult GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
+        public virtual async Task<IActionResult> GetDropDown(string viewName, string keyField, string labelField, string search, int pageIndex, int pageSize)
         {
             if (!IsAllowed(DynDataAPIMethod.DropDown, viewName))
                 return new UnauthorizedResult();
@@ -959,7 +941,7 @@ namespace a2n.DynData
             if (qry != null)
             {
                 //return qry.Select(valueType, keyField, labelField).ToPagingResult(pageSize, pageIndex);
-                return Ok(qry.ToPagingResult(pageSize, pageIndex));
+                return Ok(await qry.ToPagingResultAsync(pageSize, pageIndex));
             }
             else
                 return Ok(new PagingResult<dynamic>());

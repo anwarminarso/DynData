@@ -8,11 +8,11 @@
     <Authors>Anwar Minarso</Authors>
     <Description>Dynamic Data for EF</Description>
     <PackageProjectUrl>https://github.com/anwarminarso/DynData</PackageProjectUrl>
-    <Copyright>Anwar Minarso @ 2021-2024</Copyright>
+    <Copyright>Anwar Minarso @ 2021-2025</Copyright>
     <RepositoryUrl>https://github.com/anwarminarso/DynData</RepositoryUrl>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <DefineConstants>$(DefineConstants);</DefineConstants>
-    <Version>9.0.0</Version>
+    <Version>9.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,10 +24,10 @@
   <Choose>
     <When Condition="'$(TargetFramework)' == 'net6.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.35" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.35" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.35" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.35" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.36" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.36" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.36" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.36" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.29" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.3" />
@@ -46,10 +46,10 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net8.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.11" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.13" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.13" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.13" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
@@ -60,12 +60,12 @@
         <DefineConstants>$(DefineConstants);DISABLE_MYSQL</DefineConstants>
       </PropertyGroup>
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.1" />
       </ItemGroup>
     </When>

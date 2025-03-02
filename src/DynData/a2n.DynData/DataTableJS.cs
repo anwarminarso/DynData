@@ -9,6 +9,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace a2n.DynData
 {
@@ -686,6 +687,72 @@ namespace a2n.DynData
                 };
             }
             return qry.ToPagingResult(length, pageIndex);
+        }
+
+        public async Task<PagingResult<T>> ToPagingResultAsync<T>(IQueryable<T> query)
+        {
+            int pageIndex = 0;
+            if (length > 0)
+                pageIndex = start / length;
+            var qry = ToQueryable(query);
+            if (length == -1)
+            {
+                return new PagingResult<T>()
+                {
+                    pageIndex = 0,
+                    pageSize = -1,
+                    context = null,
+                    items = await qry.ToArrayAsync(),
+                    totalPages = 1,
+                    totalRows = await qry.CountAsync()
+                };
+            }
+            return await qry.ToPagingResultAsync(length, pageIndex);
+        }
+        public async Task<PagingResult<dynamic>> ToPagingResultAsync(IQueryable<dynamic> query, Type valueType)
+        {
+            var propArr = valueType.GetProperties();
+            return await ToPagingResultAsync(query, valueType, propArr);
+        }
+        public async Task<PagingResult<dynamic>> ToPagingResultAsync(IQueryable<dynamic> query, Type valueType, PropertyInfo[] propArr)
+        {
+            int pageIndex = 0;
+            if (length > 0)
+                pageIndex = start / length;
+            var qry = ToQueryable(query, valueType, propArr);
+            if (length == -1)
+            {
+                return new PagingResult<dynamic>()
+                {
+                    pageIndex = 0,
+                    pageSize = -1,
+                    context = null,
+                    items = await qry.ToArrayAsync(),
+                    totalPages = 1,
+                    totalRows = await qry.CountAsync()
+                };
+            }
+            return await qry.ToPagingResultAsync(length, pageIndex);
+        }
+        public async Task<PagingResult<dynamic>> ToPagingResultAsync(IQueryable<dynamic> query, Type valueType, Metadata[] metaArr)
+        {
+            int pageIndex = 0;
+            if (length > 0)
+                pageIndex = start / length;
+            var qry = ToQueryable(query, valueType, metaArr);
+            if (length == -1)
+            {
+                return new PagingResult<dynamic>()
+                {
+                    pageIndex = 0,
+                    pageSize = -1,
+                    context = null,
+                    items = await qry.ToArrayAsync(),
+                    totalPages = 1,
+                    totalRows = await qry.CountAsync()
+                };
+            }
+            return await qry.ToPagingResultAsync(length, pageIndex);
         }
     }
 

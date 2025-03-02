@@ -1,5 +1,6 @@
 ﻿
 using a2n.DynData;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -107,6 +108,30 @@ namespace System.Linq
             if (result.pageIndex < 0)
                 result.pageIndex = 0;
             result.items = source.Skip(result.pageIndex * result.pageSize).Take(result.pageSize).ToArray();
+            return result;
+        }
+        public static async Task<PagingResult<T>> ToPagingResultAsync<T>(this IQueryable<T> source, int pageSize = 20, int pageIndex = 0, object context = null)
+        {
+            var result = new PagingResult<T>();
+            result.pageSize = pageSize;
+            result.pageIndex = pageIndex;
+            result.totalRows = 0;
+            result.totalPages = 0;
+            result.context = context;
+            if (pageSize <= 0)
+                result.pageSize = 20;
+            if (result.pageIndex <= 0)
+                result.pageIndex = 0;
+
+            result.totalRows = source.Count();
+            result.totalPages = (result.totalRows / result.pageSize);
+            if (result.totalRows % result.pageSize > 0)
+                result.totalPages++;
+            if (result.pageIndex + 1 > result.totalPages)
+                result.pageIndex = result.totalPages - 1;
+            if (result.pageIndex < 0)
+                result.pageIndex = 0;
+            result.items = await source.Skip(result.pageIndex * result.pageSize).Take(result.pageSize).ToArrayAsync();
             return result;
         }
 
