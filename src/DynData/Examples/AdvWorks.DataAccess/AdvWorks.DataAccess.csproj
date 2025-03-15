@@ -44,12 +44,12 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net8.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.14">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.13" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.13">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.14">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
@@ -60,14 +60,14 @@
         <DefineConstants>$(DefineConstants);DISABLE_MYSQL</DefineConstants>
       </PropertyGroup>
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <!--<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />-->
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2">
+        <!--<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />-->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
           <!--<PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         </PackageReference>
