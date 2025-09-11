@@ -12,7 +12,7 @@
     <RepositoryUrl>https://github.com/anwarminarso/DynData</RepositoryUrl>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <DefineConstants>$(DefineConstants);</DefineConstants>
-    <Version>9.0.3</Version>
+    <Version>9.0.9</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -46,27 +46,27 @@
     </When>
     <When Condition="'$(TargetFramework)' == 'net8.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.14" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.20" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.20" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.20" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.20" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
       </ItemGroup>
     </When>
     <When Condition="'$(TargetFramework)' == 'net9.0'">
-      <PropertyGroup>
+      <!--<PropertyGroup>
         <DefineConstants>$(DefineConstants);DISABLE_MYSQL</DefineConstants>
-      </PropertyGroup>
+      </PropertyGroup>-->
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.3" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.3" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.1" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
       </ItemGroup>
     </When>
   </Choose>
