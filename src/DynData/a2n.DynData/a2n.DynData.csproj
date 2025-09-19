@@ -28,7 +28,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.36" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.36" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.36" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.29" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.3" />
       </ItemGroup>
@@ -39,7 +39,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.20" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.20" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.20" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.18" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
       </ItemGroup>
@@ -50,7 +50,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.20" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.20" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.20" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
       </ItemGroup>
@@ -64,7 +64,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
       </ItemGroup>
