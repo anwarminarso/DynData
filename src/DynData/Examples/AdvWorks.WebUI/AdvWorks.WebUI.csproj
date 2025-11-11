@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFrameworks>net9.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <StartupObject>AdvWorks.WebUI.Program</StartupObject>
@@ -23,8 +23,8 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.36" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.29" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.3" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_POSTGRESQL'))" Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.29" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.3" />
       </ItemGroup>
     </When>
 
@@ -39,23 +39,23 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.20" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.18" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_POSTGRESQL'))" Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.18" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
       </ItemGroup>
     </When>
     <When Condition="'$(TargetFramework)' == 'net8.0'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.20" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.20" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.20" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.22" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.22" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.22" />
 
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.20" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.20" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.20" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.22" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.22" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.22" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_POSTGRESQL'))" Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
       </ItemGroup>
     </When>
     <When Condition="'$(TargetFramework)' == 'net9.0'">
@@ -63,17 +63,35 @@
         <DefineConstants>$(DefineConstants);DISABLE_MYSQL</DefineConstants>
       </PropertyGroup>-->
       <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.9" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.10" />
 
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.10" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.10" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_POSTGRESQL'))" Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+      </ItemGroup>
+    </When>
+    <When Condition="'$(TargetFramework)' == 'net10.0'">
+      <PropertyGroup>
+        <DefineConstants>$(DefineConstants);DISABLE_MYSQL;DISABLE_POSTGRESQL</DefineConstants>
+      </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.0" />
+
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_POSTGRESQL'))" Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-rc.2" />
+        <PackageReference Condition="!$(DefineConstants.Contains('DISABLE_MYSQL'))" Include="Pomelo.EntityFrameworkCore.MySql" Version="10.0.0" />
       </ItemGroup>
     </When>
   </Choose>

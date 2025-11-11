@@ -22,8 +22,10 @@ public partial class NorthwindDbContext : DynDbContext
     {
         switch (DBSetting.Provider)
         {
+#if !DISABLE_MYSQL
             case DatabaseProvider.Postgres:
                 throw new NotImplementedException("");
+#endif
 #if !DISABLE_MYSQL
             case DatabaseProvider.MySql:
                 throw new NotImplementedException("");

@@ -61,6 +61,7 @@ namespace a2n.DynData
                             result = Expression.Not(exp);
                         }
                         break;
+#if !DISABLE_POSTGRESQL
                     case ExpressionOperator.PGSQLContains:
                         //result = Expression.Call(prop, MethodStringContainsIgnoreCase, Expression.Constant(value, typeof(string)), Expression.Constant(StringComparison.OrdinalIgnoreCase, typeof(StringComparison)));
                         result = Expression.Call(
@@ -83,6 +84,7 @@ namespace a2n.DynData
                             result = Expression.Not(exp);
                         }
                         break;
+#endif
                     case ExpressionOperator.In:
                         {
                             var mtd = typeof(List<>).MakeGenericType(currentRule.ReferenceFieldType).GetMethod(nameof(String.Contains));

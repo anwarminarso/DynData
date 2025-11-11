@@ -21,7 +21,9 @@ namespace a2n.DynData
     public enum DatabaseProvider
     {
         SqlServer,
+#if !DISABLE_POSTGRESQL
         Postgres,
+#endif
 #if !DISABLE_MYSQL
         MySql,
 #endif

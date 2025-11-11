@@ -23,9 +23,11 @@ namespace Microsoft.EntityFrameworkCore
                 case DatabaseProvider.SqlServer:
                     optionsBuilder = optionsBuilder.UseSqlServer(dbSetting.ConnectionString);
                     break;
+#if !DISABLE_POSTGRESQL
                 case DatabaseProvider.Postgres:
                     optionsBuilder = optionsBuilder.UseNpgsql(dbSetting.ConnectionString);
                     break;
+#endif
 #if !DISABLE_MYSQL
                 case DatabaseProvider.MySql:
                     optionsBuilder = optionsBuilder.UseMySql(dbSetting.ConnectionString, ServerVersion.AutoDetect(dbSetting.ConnectionString));
@@ -52,9 +54,11 @@ namespace Microsoft.EntityFrameworkCore
                 case DatabaseProvider.SqlServer:
                     optionsBuilder = optionsBuilder.UseSqlServer(dbSetting.ConnectionString);
                     break;
+#if !DISABLE_POSTGRESQL
                 case DatabaseProvider.Postgres:
                     optionsBuilder = optionsBuilder.UseNpgsql(dbSetting.ConnectionString);
                     break;
+#endif
 #if !DISABLE_MYSQL
                 case DatabaseProvider.MySql:
                     optionsBuilder = optionsBuilder.UseMySql(dbSetting.ConnectionString, ServerVersion.AutoDetect(dbSetting.ConnectionString));
