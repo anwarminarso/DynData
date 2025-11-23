@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/00 Libs/">
+    <Project Path="a2n.DynData/a2n.DynData.csproj" />
+  </Folder>
+  <Folder Name="/10 Javascript Libs/">
+    <File Path="a2n Javascripts/a2n-DynData.js" />
+    <File Path="a2n Javascripts/a2n.js" />
+  </Folder>
+  <Folder Name="/20 Templates/" />
+  <Folder Name="/30 Examples/" />
+  <Folder Name="/30 Examples/01 SQLite - Northwind/">
+    <Project Path="Examples/Northwind.DataAccess/Northwind.DataAccess.csproj" />
+    <Project Path="Examples/Northwind.WebUI/Northwind.WebUI.csproj" />
+  </Folder>
+  <Folder Name="/30 Examples/04 SQL Server - AdventureWorks/">
+    <Project Path="Examples/AdvWorks.DataAccess/AdvWorks.DataAccess.csproj" />
+    <Project Path="Examples/AdvWorks.WebUI/AdvWorks.WebUI.csproj" />
+  </Folder>
+</Solution>
