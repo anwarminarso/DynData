@@ -8,7 +8,7 @@
     <Authors>Anwar Minarso</Authors>
     <Description>Dynamic Data for EF</Description>
     <PackageProjectUrl>https://github.com/anwarminarso/DynData</PackageProjectUrl>
-    <Copyright>Anwar Minarso @ 2021-2025</Copyright>
+    <Copyright>Anwar Minarso @ 2021-2026</Copyright>
     <RepositoryUrl>https://github.com/anwarminarso/DynData</RepositoryUrl>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <DefineConstants>$(DefineConstants);</DefineConstants>

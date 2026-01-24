@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <StartupObject>AdvWorks.WebUI.Program</StartupObject>
-    <Copyright>Anwar Minarso @ 2021-2025</Copyright>
+    <Copyright>Anwar Minarso @ 2021-2026</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
