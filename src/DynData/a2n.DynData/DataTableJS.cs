@@ -127,11 +127,11 @@ namespace a2n.DynData
                             ExpressionRule childFilter = null;
                             if (val.StartsWith(">"))
                             {
-                                var opr = ExpressionOperator.LessThan;
+                                var opr = ExpressionOperator.GreaterThan;
                                 if (val.StartsWith(">="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -148,15 +148,14 @@ namespace a2n.DynData
                             }
                             else if (val.StartsWith("<"))
                             {
-                                var opr = ExpressionOperator.GreaterThan;
+                                var opr = ExpressionOperator.LessThan;
                                 if (val.StartsWith("<="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                    opr = ExpressionOperator.LessThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
-
                                 childFilter = new ExpressionRule()
                                 {
                                     IsBracket = false,
@@ -361,11 +360,11 @@ namespace a2n.DynData
                             ExpressionRule childFilter = null;
                             if (val.StartsWith(">"))
                             {
-                                var opr = ExpressionOperator.LessThan;
+                                var opr = ExpressionOperator.GreaterThan;
                                 if (val.StartsWith(">="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -382,11 +381,11 @@ namespace a2n.DynData
                             }
                             else if (val.StartsWith("<"))
                             {
-                                var opr = ExpressionOperator.GreaterThan;
+                                var opr = ExpressionOperator.LessThan;
                                 if (val.StartsWith("<="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                    opr = ExpressionOperator.LessThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -697,14 +696,15 @@ namespace a2n.DynData
             var qry = ToQueryable(query);
             if (length == -1)
             {
+                var items = await qry.ToArrayAsync();
                 return new PagingResult<T>()
                 {
                     pageIndex = 0,
                     pageSize = -1,
                     context = null,
-                    items = await qry.ToArrayAsync(),
+                    items = items,
                     totalPages = 1,
-                    totalRows = await qry.CountAsync()
+                    totalRows = items.Length
                 };
             }
             return await qry.ToPagingResultAsync(length, pageIndex);
@@ -722,14 +722,15 @@ namespace a2n.DynData
             var qry = ToQueryable(query, valueType, propArr);
             if (length == -1)
             {
+                var items = await qry.ToArrayAsync();
                 return new PagingResult<dynamic>()
                 {
                     pageIndex = 0,
                     pageSize = -1,
                     context = null,
-                    items = await qry.ToArrayAsync(),
+                    items = items,
                     totalPages = 1,
-                    totalRows = await qry.CountAsync()
+                    totalRows = items.Length
                 };
             }
             return await qry.ToPagingResultAsync(length, pageIndex);
@@ -742,14 +743,15 @@ namespace a2n.DynData
             var qry = ToQueryable(query, valueType, metaArr);
             if (length == -1)
             {
+                var items = await qry.ToArrayAsync();
                 return new PagingResult<dynamic>()
                 {
                     pageIndex = 0,
                     pageSize = -1,
                     context = null,
-                    items = await qry.ToArrayAsync(),
+                    items = items,
                     totalPages = 1,
-                    totalRows = await qry.CountAsync()
+                    totalRows = items.Length
                 };
             }
             return await qry.ToPagingResultAsync(length, pageIndex);
@@ -862,11 +864,11 @@ namespace a2n.DynData
                             ExpressionRule childFilter = null;
                             if (val.StartsWith(">"))
                             {
-                                var opr = ExpressionOperator.LessThan;
+                                var opr = ExpressionOperator.GreaterThan;
                                 if (val.StartsWith(">="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -883,11 +885,11 @@ namespace a2n.DynData
                             }
                             else if (val.StartsWith("<"))
                             {
-                                var opr = ExpressionOperator.GreaterThan;
+                                var opr = ExpressionOperator.LessThan;
                                 if (val.StartsWith("<="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                    opr = ExpressionOperator.LessThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -1095,11 +1097,11 @@ namespace a2n.DynData
                             ExpressionRule childFilter = null;
                             if (val.StartsWith(">"))
                             {
-                                var opr = ExpressionOperator.LessThan;
+                                var opr = ExpressionOperator.GreaterThan;
                                 if (val.StartsWith(">="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
+                                    opr = ExpressionOperator.GreaterThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -1116,11 +1118,11 @@ namespace a2n.DynData
                             }
                             else if (val.StartsWith("<"))
                             {
-                                var opr = ExpressionOperator.GreaterThan;
+                                var opr = ExpressionOperator.LessThan;
                                 if (val.StartsWith("<="))
                                 {
                                     val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
+                                    opr = ExpressionOperator.LessThanOrEqual;
                                 }
                                 else
                                     val = val.Substring(1, val.Length - 1).Trim();
@@ -1173,7 +1175,7 @@ namespace a2n.DynData
                                 childFilter = new ExpressionRule()
                                 {
                                     IsBracket = false,
-                                    Operator = ExpressionOperator.EndsWith,
+                                    Operator = ExpressionOperator.StartsWith,
                                     LogicalOperator = ExpressionLogicalOperator.And,
                                     ReferenceFieldName = meta.FieldName,
                                     ReferenceFieldType = meta.PropertyInfo.PropertyType,

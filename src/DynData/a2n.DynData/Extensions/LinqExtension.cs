@@ -1,6 +1,7 @@
 ﻿
 using a2n.DynData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -31,6 +32,7 @@ namespace System.Linq
         private static MethodInfo mtdJoin;
         private static MethodInfo mtdUnion;
         private static MethodInfo mtdDefaultIfEmptyGeneric;
+        private static MethodInfo mtdAsNoTrackingGeneric;
 
         static LinqExtension()
         {
@@ -44,6 +46,8 @@ namespace System.Linq
             mtdDefaultIfEmptyGeneric = typeof(Enumerable).GetMethods().Where(t => t.Name.StartsWith("DefaultIfEmpty") && t.GetParameters().Length == 1).FirstOrDefault();
             mtdJoin = typeof(Queryable).GetMethods().Where(t => t.Name.StartsWith("Join") && t.GetParameters().Length == 5).FirstOrDefault();
             mtdUnion = typeof(Queryable).GetMethods().Where(t => t.Name.StartsWith("Union") && t.GetParameters().Length == 2).FirstOrDefault();
+            mtdAsNoTrackingGeneric = typeof(EntityFrameworkQueryableExtensions).GetMethods()
+                    .Where(t => t.Name == "AsNoTracking" && t.GetParameters().Length == 1).FirstOrDefault();
            
 
             mtdQueryableSelectByGeneric = typeof(Queryable).GetMethods()
@@ -110,6 +114,8 @@ namespace System.Linq
             result.items = source.Skip(result.pageIndex * result.pageSize).Take(result.pageSize).ToArray();
             return result;
         }
+
+
         public static async Task<PagingResult<T>> ToPagingResultAsync<T>(this IQueryable<T> source, int pageSize = 20, int pageIndex = 0, object context = null)
         {
             var result = new PagingResult<T>();
@@ -123,7 +129,7 @@ namespace System.Linq
             if (result.pageIndex <= 0)
                 result.pageIndex = 0;
 
-            result.totalRows = source.Count();
+            result.totalRows = await source.CountAsync();
             result.totalPages = (result.totalRows / result.pageSize);
             if (result.totalRows % result.pageSize > 0)
                 result.totalPages++;
@@ -219,6 +225,13 @@ namespace System.Linq
         {
             var mtd = mtdQueryableWhereGeneric.MakeGenericMethod(query.ElementType);
             return mtd.Invoke(null, new object[] { query, whereExp }) as IQueryable<object>;
+        }
+
+        public static IQueryable<dynamic> AsNoTrackingDynamic(this IQueryable<dynamic> query)
+        {
+            var elementType = query.ElementType;
+            var mtd = mtdAsNoTrackingGeneric.MakeGenericMethod(elementType);
+            return mtd.Invoke(null, new object[] { query }) as IQueryable<dynamic>;
         }
 
         public static IQueryable<object> Select(this IQueryable<object> query, Type sourceType, params string[] fieldNames)
@@ -1260,7 +1273,7 @@ namespace System.Linq
             // no need to convert/use SqlDataReader.. thx EF 6
             foreach (var item in query)
             {
-                firstField = false;
+                firstField = true;
                 for (int i = 0; i < sytemProps.Length; i++)
                 {
                     var pi = sytemProps[i];
@@ -1311,5 +1324,131 @@ namespace System.Linq
             LiteExcelWriter xlWriter = new LiteExcelWriter();
             xlWriter.Render(query, strm);
         }
+
+
+        //public static IQueryable<IGrouping<DateTime, T>> GroupByDateTimeInterval<T>(this IQueryable<T> query, DateTimeInterval interval, Expression<Func<T, DateTime>> dateTimeSelector)
+        //{
+        //    var qType = query.GetType();
+        //    var elType = query.ElementType;
+        //    IQueryable<IGrouping<DateTime, T>> grp = null;
+        //    var isDatabaseQuery = qType.GetGenericTypeDefinition() == typeof(EntityQueryable<>);
+        //    if (isDatabaseQuery)
+        //    {
+        //        switch (interval)
+        //        {
+        //            case DateTimeInterval.Minutely:
+        //                break;
+        //            case DateTimeInterval.ThreeMinute:
+        //                break;
+        //            case DateTimeInterval.FiveMinute:
+        //                break;
+        //            case DateTimeInterval.TenMinute:
+        //                break;
+        //            case DateTimeInterval.FifteenMinute:
+        //                break;
+        //            case DateTimeInterval.ThirtyMinute:
+        //                break;
+        //            case DateTimeInterval.Hourly:
+        //                break;
+        //            case DateTimeInterval.TwoHour:
+        //                break;
+        //            case DateTimeInterval.ThreeHour:
+        //                break;
+        //            case DateTimeInterval.FourHour:
+        //                break;
+        //            case DateTimeInterval.SixHour:
+        //                break;
+        //            case DateTimeInterval.TwelveHour:
+        //                break;
+        //            case DateTimeInterval.Daily:
+        //                break;
+        //            case DateTimeInterval.ThreeDay:
+        //                break;
+        //            case DateTimeInterval.Weekly:
+        //                break;
+        //            case DateTimeInterval.Monthly:
+        //                break;
+        //            case DateTimeInterval.Quarter:
+        //                break;
+        //            case DateTimeInterval.Semester:
+        //                break;
+        //            case DateTimeInterval.Yearly:
+        //                break;
+        //            default:
+        //                break;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        switch (interval)
+        //        {
+        //            case DateTimeInterval.Minutely:
+        //                break;
+        //            case DateTimeInterval.ThreeMinute:
+        //                break;
+        //            case DateTimeInterval.FiveMinute:
+        //                break;
+        //            case DateTimeInterval.TenMinute:
+        //                break;
+        //            case DateTimeInterval.FifteenMinute:
+        //                break;
+        //            case DateTimeInterval.ThirtyMinute:
+        //                break;
+        //            case DateTimeInterval.Hourly:
+        //                break;
+        //            case DateTimeInterval.TwoHour:
+        //                break;
+        //            case DateTimeInterval.ThreeHour:
+        //                break;
+        //            case DateTimeInterval.FourHour:
+        //                break;
+        //            case DateTimeInterval.SixHour:
+        //                break;
+        //            case DateTimeInterval.TwelveHour:
+        //                break;
+        //            case DateTimeInterval.Daily:
+        //                break;
+        //            case DateTimeInterval.ThreeDay:
+        //                break;
+        //            case DateTimeInterval.Weekly:
+        //                break;
+        //            case DateTimeInterval.Monthly:
+        //                break;
+        //            case DateTimeInterval.Quarter:
+        //                break;
+        //            case DateTimeInterval.Semester:
+        //                break;
+        //            case DateTimeInterval.Yearly:
+        //                break;
+        //            default:
+        //                break;
+        //        }
+        //    }
+        //    return grp;
+        //}
+    
     }
+
+    //public enum DateTimeInterval
+    //{
+    //    Minutely = 0,
+    //    ThreeMinute = 1,
+    //    FiveMinute = 2,
+    //    TenMinute = 3,
+    //    FifteenMinute = 4,
+    //    ThirtyMinute = 5,
+    //    Hourly = 6,
+    //    TwoHour = 7,
+    //    ThreeHour = 8,
+    //    FourHour = 9,
+    //    SixHour = 10,
+    //    TwelveHour = 11,
+    //    Daily = 12,
+    //    ThreeDay = 13,
+    //    Weekly = 14,
+    //    Monthly = 15,
+    //    Quarter = 16,
+    //    Semester = 17,
+    //    Yearly = 18
+    //}
 }

@@ -14,33 +14,33 @@ namespace System.Linq
         {
             if (string.IsNullOrEmpty(value))
                 return value;
-            var output = "";
             var len = value.Length;
-            var c = "";
+            var sb = new StringBuilder(len + len / 2);
 
             for (var i = 0; i < len; i++)
             {
-                c = value[i].ToString();
+                var c = value[i];
 
                 if (i == 0)
                 {
-                    output += c.ToUpper();
+                    sb.Append(char.ToUpper(c));
                 }
-                else if (c != c.ToLower() && c == c.ToUpper())
+                else if (char.IsUpper(c))
                 {
-                    output += " " + c;
+                    sb.Append(' ');
+                    sb.Append(c);
                 }
-                else if (c == "-" || c == "_")
+                else if (c == '-' || c == '_')
                 {
-                    output += " ";
+                    sb.Append(' ');
                 }
                 else
                 {
-                    output += c;
+                    sb.Append(c);
                 }
             }
 
-            return output;
+            return sb.ToString();
         }
 
         public static string ToCamelCase(this string value)
@@ -55,7 +55,7 @@ namespace System.Linq
         {
             if (string.IsNullOrEmpty(clearText))
                 throw new ArgumentNullException(nameof(clearText));
-            X509Store store = new X509Store(storeName, storeLocation, OpenFlags.OpenExistingOnly);
+            using X509Store store = new X509Store(storeName, storeLocation, OpenFlags.OpenExistingOnly);
             var subjectName = $"CN={subject}";
             var cert = store.Certificates
                 .Where(t => t.Subject.ToLower() == subjectName.ToLower())
@@ -76,7 +76,7 @@ namespace System.Linq
         {
             if (string.IsNullOrEmpty(encrypted64Text))
                 throw new ArgumentNullException(nameof(encrypted64Text));
-            X509Store store = new X509Store(storeName, storeLocation, OpenFlags.OpenExistingOnly);
+            using X509Store store = new X509Store(storeName, storeLocation, OpenFlags.OpenExistingOnly);
             var subjectName = $"CN={subject}";
             var cert = store.Certificates
                 .Where(t => t.Subject.ToLower() == subjectName.ToLower())

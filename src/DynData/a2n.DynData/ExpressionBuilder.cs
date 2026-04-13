@@ -375,7 +375,7 @@ namespace a2n.DynData
                                 result = JsonConvert.DeserializeObject(CompareFieldValue, ReferenceFieldType);
                             else if (!string.IsNullOrEmpty(CompareFieldValue))
                                 result = new Guid(CompareFieldValue);
-                            else if (ReferenceFieldType == typeof(DateTime?))
+                            else if (ReferenceFieldType == typeof(Guid?))
                                 result = default(Guid?);
                             else
                                 throw new Exception("Failed to cast guid");

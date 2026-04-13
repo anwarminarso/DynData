@@ -276,6 +276,7 @@ namespace a2n.DynData
         private class ExcelFormater
         {
             public Func<object, object> func = null;
+            public Regex regex { get; set; }
 
             public string match { get; set; }
             public int style { get; set; }
@@ -287,6 +288,7 @@ namespace a2n.DynData
                 this.match = match;
                 this.style = style;
                 this.func = func;
+                this.regex = new Regex(match, RegexOptions.Compiled);
             }
         }
 
@@ -329,14 +331,12 @@ namespace a2n.DynData
                 if (value == null)
                     continue;
 
-                var valueString = string.Empty; value.ToString().Trim();
+                var valueString = value.ToString().Trim();
                 foreach (var key in dicExcelFormater.Keys)
                 {
                     var formater = dicExcelFormater[key];
-                    var regex = new Regex(formater.match);
-                    valueString = value.ToString().Trim();
 
-                    if (!regex.IsMatch(valueString))
+                    if (!formater.regex.IsMatch(valueString))
                         continue;
 
                     object valueFmt = valueString;

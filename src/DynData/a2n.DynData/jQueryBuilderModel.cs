@@ -112,9 +112,9 @@ namespace a2n.DynData
                     dicValues["operators"] = new string[] { "equal", "not_equal", "begins_with", "ends_with", "contains", "is_empty", "is_not_empty" };
                 }
                 else if (pt == typeof(Int16) || pt == typeof(Int32) || pt == typeof(Int64)
-                    || pt == typeof(UInt16) || pt == typeof(UInt16) || pt == typeof(UInt16)
+                    || pt == typeof(UInt16) || pt == typeof(UInt32) || pt == typeof(UInt64)
                     || pt == typeof(Int16?) || pt == typeof(Int32?) || pt == typeof(Int64?)
-                    || pt == typeof(UInt16?) || pt == typeof(UInt16?) || pt == typeof(UInt16?))
+                    || pt == typeof(UInt16?) || pt == typeof(UInt32?) || pt == typeof(UInt64?))
                 {
                     dicValues["type"] = "integer";
                     dicValues["input"] = "number";
@@ -356,7 +356,6 @@ namespace a2n.DynData
             {
                 return JsonConvert.DeserializeObject<jQueryBuilderRuleModel>(jo.ToString(), SpecifiedSubclassConversion);
             }
-            throw new NotImplementedException();
         }
 
         public override bool CanWrite
@@ -432,9 +431,9 @@ namespace a2n.DynData
                 result = "string";
             }
             else if (propertyType == typeof(Int16) || propertyType == typeof(Int32) || propertyType == typeof(Int64)
-                || propertyType == typeof(UInt16) || propertyType == typeof(UInt16) || propertyType == typeof(UInt16)
+                || propertyType == typeof(UInt16) || propertyType == typeof(UInt32) || propertyType == typeof(UInt64)
                 || propertyType == typeof(Int16?) || propertyType == typeof(Int32?) || propertyType == typeof(Int64?)
-                || propertyType == typeof(UInt16?) || propertyType == typeof(UInt16?) || propertyType == typeof(UInt16?))
+                || propertyType == typeof(UInt16?) || propertyType == typeof(UInt32?) || propertyType == typeof(UInt64?))
             {
                 result = "integer";
             }
@@ -464,9 +463,9 @@ namespace a2n.DynData
                 result = "text";
             }
             else if (propertyType == typeof(Int16) || propertyType == typeof(Int32) || propertyType == typeof(Int64)
-                || propertyType == typeof(UInt16) || propertyType == typeof(UInt16) || propertyType == typeof(UInt16)
+                || propertyType == typeof(UInt16) || propertyType == typeof(UInt32) || propertyType == typeof(UInt64)
                 || propertyType == typeof(Int16?) || propertyType == typeof(Int32?) || propertyType == typeof(Int64?)
-                || propertyType == typeof(UInt16?) || propertyType == typeof(UInt16?) || propertyType == typeof(UInt16?))
+                || propertyType == typeof(UInt16?) || propertyType == typeof(UInt32?) || propertyType == typeof(UInt64?))
             {
                 result = "number";
             }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Linq;
@@ -38,10 +38,8 @@ namespace a2n.DynData
         [HttpGet]
         public virtual Task<string[]> GetAllViewNames()
         {
-            return Task.Run(() =>
-            {
-                return db.GetAllTableViewNames().OrderBy(t => t).ToArray();
-            });
+            var result = db.GetAllTableViewNames().OrderBy(t => t).ToArray();
+            return Task.FromResult(result);
         }
 
 
@@ -50,14 +48,14 @@ namespace a2n.DynData
         public virtual async Task<DataTableJSResponse> GetDataTable(string viewName, [FromForm] DataTableJSRequest req)
         {
             IQueryable<dynamic> qry = null;
-            Type valueType = valueType = db.GetTableType(viewName);
+            Type valueType = db.GetTableType(viewName);
             Metadata[] metaArr = null;
 
 
             if (valueType != null)
             {
                 metaArr = db.GetMetadata(viewName);
-                qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
             }
             if (qry != null)
             {
@@ -88,7 +86,7 @@ namespace a2n.DynData
             valueType = db.GetTableType(viewName);
             if (valueType != null)
             {
-                qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 propArr = db.GetProperties(viewName);
                 metadataArr = db.GetMetadata(viewName);
             }
@@ -147,7 +145,7 @@ namespace a2n.DynData
             valueType = db.GetTableType(viewName);
             if (valueType != null)
             {
-                qry = db.Query(viewName, req.rules) as IQueryable<dynamic>;
+                qry = (db.Query(viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 propArr = db.GetProperties(viewName);
                 metadataArr = db.GetMetadata(viewName);
             }
@@ -207,9 +205,15 @@ namespace a2n.DynData
         [HttpPost]
         public virtual object ReadRecord(string viewName, JToken data)
         {
+            if (data == null)
+                return NotFound();
+            if (data.Type == JTokenType.Array)
+                return NotFound();
             JObject jObj = JObject.Parse(data.ToString());
+            if (jObj == null)
+                return NotFound();
             if (jObj.Properties().Count() == 0)
-                return null;
+                return NotFound();
             return db.FindByKey(viewName, jObj);
         }
 
@@ -345,12 +349,10 @@ namespace a2n.DynData
         [HttpGet]
         public virtual Task<string[]> GetAllViewNames()
         {
-            return Task.Run(() =>
-            {
-                var tableNames = db.GetAllTableViewNames();
-                var tplNames = qryTpl.GetQueryTemplateNames();
-                return tableNames.Union(tplNames).OrderBy(t => t).ToArray();
-            });
+            var tableNames = db.GetAllTableViewNames();
+            var tplNames = qryTpl.GetQueryTemplateNames();
+            var result = tableNames.Union(tplNames).OrderBy(t => t).ToArray();
+            return Task.FromResult(result);
         }
 
         [Route("{viewName}/datatable")]
@@ -362,7 +364,7 @@ namespace a2n.DynData
             Metadata[] metaArr = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, provider, viewName);
+                qry = (qryTpl.GetQuery(db, provider, viewName) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 valueType = qryTpl.GetValueType(db, provider, viewName);
                 metaArr = qryTpl.GetMetadata(db, provider, viewName);
             }
@@ -372,7 +374,7 @@ namespace a2n.DynData
                 if (valueType != null)
                 {
                     metaArr = db.GetMetadata(viewName);
-                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 }
             }
             if (qry != null)
@@ -403,7 +405,7 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, provider, viewName);
+                qry = (qryTpl.GetQuery(db, provider, viewName) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 valueType = qryTpl.GetValueType(db, provider, viewName);
                 metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
@@ -412,7 +414,7 @@ namespace a2n.DynData
                 valueType = db.GetTableType(viewName);
                 if (valueType != null)
                 {
-                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
                     propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
@@ -476,7 +478,7 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
+                qry = (qryTpl.GetQuery(db, provider, viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 valueType = qryTpl.GetValueType(db, provider, viewName);
                 metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
@@ -485,7 +487,7 @@ namespace a2n.DynData
                 valueType = db.GetTableType(viewName);
                 if (valueType != null)
                 {
-                    qry = db.Query(viewName, req.rules) as IQueryable<dynamic>;
+                    qry = (db.Query(viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
                     propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
@@ -553,9 +555,15 @@ namespace a2n.DynData
         [HttpPost]
         public virtual object ReadRecord(string viewName, JToken data)
         {
+            if (data == null)
+                return NotFound();
+            if (data.Type == JTokenType.Array)
+                return NotFound();
             JObject jObj = JObject.Parse(data.ToString());
+            if (jObj == null)
+                return NotFound();
             if (jObj.Properties().Count() == 0)
-                return null;
+                return NotFound();
             if (qryTpl.HasQueryName(viewName))
             {
                 return qryTpl.FindByKey(db, provider, viewName, jObj);
@@ -738,7 +746,7 @@ namespace a2n.DynData
             Metadata[] metaArr = null;
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, provider, viewName);
+                qry = (qryTpl.GetQuery(db, provider, viewName) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 valueType = qryTpl.GetValueType(db, provider, viewName);
                 metaArr = qryTpl.GetMetadata(db, provider, viewName);
             }
@@ -748,7 +756,7 @@ namespace a2n.DynData
                 if (valueType != null)
                 {
                     metaArr = db.GetMetadata(viewName);
-                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 }
             }
             if (qry != null)
@@ -785,7 +793,7 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, provider, viewName);
+                qry = (qryTpl.GetQuery(db, provider, viewName) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 valueType = qryTpl.GetValueType(db, provider, viewName);
                 metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
@@ -794,7 +802,7 @@ namespace a2n.DynData
                 valueType = db.GetTableType(viewName);
                 if (valueType != null)
                 {
-                    qry = db.GetQueryable(valueType) as IQueryable<dynamic>;
+                    qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
                     propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
@@ -868,7 +876,7 @@ namespace a2n.DynData
 
             if (qryTpl.HasQueryName(viewName))
             {
-                qry = qryTpl.GetQuery(db, provider, viewName, req.rules);
+                qry = (qryTpl.GetQuery(db, provider, viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
                 valueType = qryTpl.GetValueType(db, provider, viewName);
                 metadataArr = qryTpl.GetMetadata(db, provider, viewName);
             }
@@ -877,7 +885,7 @@ namespace a2n.DynData
                 valueType = db.GetTableType(viewName);
                 if (valueType != null)
                 {
-                    qry = db.Query(viewName, req.rules) as IQueryable<dynamic>;
+                    qry = (db.Query(viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
                     propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
@@ -957,9 +965,15 @@ namespace a2n.DynData
             if (!IsAllowed(DynDataAPIMethod.Read, viewName))
                 return new UnauthorizedResult();
 
+            if (data == null)
+                return NotFound();
+            if (data.Type == JTokenType.Array)
+                return NotFound();
             JObject jObj = JObject.Parse(data.ToString());
+            if (jObj == null)
+                return NotFound();
             if (jObj.Properties().Count() == 0)
-                return null;
+                return NotFound();
             if (qryTpl.HasQueryName(viewName))
             {
                 var obj = qryTpl.FindByKey(db, provider, viewName, jObj);

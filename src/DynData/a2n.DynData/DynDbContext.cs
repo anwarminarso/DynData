@@ -6,20 +6,20 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Collections.Concurrent;
 
 namespace a2n.DynData
 {
     public abstract class DynDbContext : DbContext
     {
         public event EventHandler<EventArgs> OnMetadataPopulated;
-
         private static object lockObj = new object();
-
         private static readonly Dictionary<Type, Dictionary<string, Type>> dicTables;
         private static readonly Dictionary<Type, Dictionary<string, Metadata[]>> dicMetadata;
 
-
+        private ConcurrentDictionary<Type, object> dicDBSet = new ConcurrentDictionary<Type, object>();
+        private static readonly ConcurrentDictionary<Type, MethodInfo> dicGetDBSetMethods = new ConcurrentDictionary<Type, MethodInfo>();
+        private static readonly ConcurrentDictionary<Type, MethodInfo> dicAsQueryableMethods = new ConcurrentDictionary<Type, MethodInfo>();
 
         public DatabaseServer DBSetting { get; set; }
 #if !DISABLE_MYSQL
@@ -134,30 +134,38 @@ namespace a2n.DynData
             where T : class, new()
         {
             var type = typeof(T);
-            var pi = this.GetType().GetProperties().Where(t => t.PropertyType.IsGenericType)
-                .Select(t => new { pi = t, args = t.PropertyType.GetGenericArguments() })
-                .Where(t => t.args[0] == type)
-                .Select(t => t.pi).FirstOrDefault();
-
+            var result = dicDBSet.GetOrAdd(type, (x) =>
+            {
+                var pi = this.GetType().GetProperties().Where(t => t.PropertyType.IsGenericType)
+                    .Select(t => new { pi = t, args = t.PropertyType.GetGenericArguments() })
+                    .Where(t => t.args[0] == x)
+                    .Select(t => t.pi).FirstOrDefault();
+                if (pi != null)
+                    return (DbSet<T>)pi.GetValue(this);
+                else
+                    return null;
+            });
             //var dbsetType = typeof(DbSet<T>);
             //var pi = this.GetType().GetProperties().Where(t => t.PropertyType == dbsetType).FirstOrDefault();
-
-            if (pi != null)
-                return (DbSet<T>)pi.GetValue(this);
-            else
+            if (result == null)
                 return null;
+            else
+                return (DbSet<T>)result;
         }
         public object GetDBSet(Type type)
         {
-            var mtd = this.GetType().GetMethod("GetDBSet", new Type[] { }).MakeGenericMethod(type);
+            var mtd = dicGetDBSetMethods.GetOrAdd(type, t =>
+                this.GetType().GetMethod("GetDBSet", new Type[] { }).MakeGenericMethod(t));
             return mtd.Invoke(this, null);
         }
         public IQueryable<dynamic> GetQueryable(Type type)
         {
             var obj = GetDBSet(type);
-            var dbsetType = typeof(DbSet<>).MakeGenericType(type);
-            var asQueryableMtd = dbsetType.GetMethod("AsQueryable", new Type[0]);
-
+            var asQueryableMtd = dicAsQueryableMethods.GetOrAdd(type, t =>
+            {
+                var dbsetType = typeof(DbSet<>).MakeGenericType(t);
+                return dbsetType.GetMethod("AsQueryable", new Type[0]);
+            });
             return asQueryableMtd.Invoke(obj, null) as IQueryable<dynamic>;
         }
         public IQueryable<dynamic> GetQueryable(string tableName)
@@ -276,7 +284,7 @@ namespace a2n.DynData
             var tableType = this.GetTableType(tableName);
             if (tableType == null)
                 throw new Exception("Table not found");
-            return FindByKey(this.GetTableType(tableName), jKey);
+            return FindByKey(tableType, jKey);
         }
         public object FindByKey(Type tableType, JObject jKey)
         {
@@ -347,14 +355,13 @@ namespace a2n.DynData
         }
         public object[] Update(string tableName, JToken value)
         {
-            var metaArr = GetMetadata(tableName);
             List<object> result = new List<object>();
             var valueType = GetTableType(tableName);
             if (valueType == null)
                 throw new Exception($"Table {tableName} not found");
             object[] dataArr = null;
-            var metaArrr = GetMetadata(tableName);
-            var metaPKArr = metaArrr.Where(t => t.IsPrimaryKey).ToArray();
+            var metaArr = GetMetadata(tableName);
+            var metaPKArr = metaArr.Where(t => t.IsPrimaryKey).ToArray();
             JObject[] jobjArr = null;
             if (value.Type == JTokenType.Array)
             {
@@ -378,7 +385,7 @@ namespace a2n.DynData
                 if (Handler != null && !Handler.OnBeforeUpdate(this, valueType, oldData, jObj))
                     continue;
 
-                var modifiedPropArr = metaArrr.Where(t => !t.IsPrimaryKey && jObj.ContainsKey(t.FieldName)).Select(t => t.PropertyInfo).ToArray();
+                var modifiedPropArr = metaArr.Where(t => !t.IsPrimaryKey && jObj.ContainsKey(t.FieldName)).Select(t => t.PropertyInfo).ToArray();
                 foreach (var modifiedProp in modifiedPropArr)
                 {
                     object newValue = jObj[modifiedProp.Name];
@@ -395,7 +402,6 @@ namespace a2n.DynData
         public object Update(string tableName, JObject value)
         {
             var valueType = GetTableType(tableName);
-            var data = value.ToObject(valueType);
             var oldData = FindByKey(valueType, value);
             var metaArr = GetMetadata(tableName);
             if (oldData == null)
@@ -431,7 +437,6 @@ namespace a2n.DynData
         }
         public object[] Delete(string tableName, JToken jKey)
         {
-            var metaArr = GetMetadata(tableName);
             List<object> result = new List<object>();
             var valueType = GetTableType(tableName);
             if (valueType == null)
@@ -443,7 +448,6 @@ namespace a2n.DynData
             }
             else
             {
-                var data = jKey.ToObject(valueType);
                 jobjArr = new JObject[] { jKey as JObject };
             }
             for (int i = 0; i < jobjArr.Length; i++)
@@ -464,9 +468,7 @@ namespace a2n.DynData
         public object Delete(string tableName, JObject jKey)
         {
             var valueType = GetTableType(tableName);
-            var data = jKey.ToObject(valueType);
             var oldData = FindByKey(valueType, jKey);
-            var metaArr = GetMetadata(tableName);
             if (oldData == null)
                 throw new Exception($"Data {jKey.ToString()} not found");
             if (Handler != null && !Handler.OnBeforeDelete(this, valueType, oldData))
