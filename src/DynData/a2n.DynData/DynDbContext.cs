@@ -13,11 +13,11 @@ namespace a2n.DynData
     public abstract class DynDbContext : DbContext
     {
         public event EventHandler<EventArgs> OnMetadataPopulated;
-        private static object lockObj = new object();
-        private static readonly Dictionary<Type, Dictionary<string, Type>> dicTables;
-        private static readonly Dictionary<Type, Dictionary<string, Metadata[]>> dicMetadata;
+        private static readonly object lockObj = new object();
+        private static readonly ConcurrentDictionary<Type, Dictionary<string, Type>> dicTables;
+        private static readonly ConcurrentDictionary<Type, Dictionary<string, Metadata[]>> dicMetadata;
 
-        private ConcurrentDictionary<Type, object> dicDBSet = new ConcurrentDictionary<Type, object>();
+        private static readonly ConcurrentDictionary<Type, PropertyInfo> dicDBSetPropertyInfo = new ConcurrentDictionary<Type, PropertyInfo>();
         private static readonly ConcurrentDictionary<Type, MethodInfo> dicGetDBSetMethods = new ConcurrentDictionary<Type, MethodInfo>();
         private static readonly ConcurrentDictionary<Type, MethodInfo> dicAsQueryableMethods = new ConcurrentDictionary<Type, MethodInfo>();
 
@@ -49,8 +49,8 @@ namespace a2n.DynData
 
         static DynDbContext()
         {
-            dicTables = new Dictionary<Type, Dictionary<string, Type>>();
-            dicMetadata = new Dictionary<Type, Dictionary<string, Metadata[]>>();
+            dicTables = new ConcurrentDictionary<Type, Dictionary<string, Type>>();
+            dicMetadata = new ConcurrentDictionary<Type, Dictionary<string, Metadata[]>>();
         }
 
         public void PopulateMetadata()
@@ -87,8 +87,8 @@ namespace a2n.DynData
                 }
 
 
-                dicTables.Add(dbCtxtType, tableTypes);
-                dicMetadata.Add(dbCtxtType, metadataTypes);
+                dicTables.TryAdd(dbCtxtType, tableTypes);
+                dicMetadata.TryAdd(dbCtxtType, metadataTypes);
             }
             OnMetadataPopulated?.Invoke(this, new EventArgs());
         }
@@ -110,6 +110,13 @@ namespace a2n.DynData
             }
         }
 
+
+        private static readonly System.Text.RegularExpressions.Regex ValidViewNameRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z_][a-zA-Z0-9_]*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        public static bool IsValidViewName(string viewName)
+        {
+            return !string.IsNullOrWhiteSpace(viewName) && ValidViewNameRegex.IsMatch(viewName);
+        }
 
         public string[] GetAllTableViewNames()
         {
@@ -134,23 +141,16 @@ namespace a2n.DynData
             where T : class, new()
         {
             var type = typeof(T);
-            var result = dicDBSet.GetOrAdd(type, (x) =>
+            var pi = dicDBSetPropertyInfo.GetOrAdd(type, (x) =>
             {
-                var pi = this.GetType().GetProperties().Where(t => t.PropertyType.IsGenericType)
+                return this.GetType().GetProperties().Where(t => t.PropertyType.IsGenericType)
                     .Select(t => new { pi = t, args = t.PropertyType.GetGenericArguments() })
                     .Where(t => t.args[0] == x)
                     .Select(t => t.pi).FirstOrDefault();
-                if (pi != null)
-                    return (DbSet<T>)pi.GetValue(this);
-                else
-                    return null;
             });
-            //var dbsetType = typeof(DbSet<T>);
-            //var pi = this.GetType().GetProperties().Where(t => t.PropertyType == dbsetType).FirstOrDefault();
-            if (result == null)
+            if (pi == null)
                 return null;
-            else
-                return (DbSet<T>)result;
+            return (DbSet<T>)pi.GetValue(this);
         }
         public object GetDBSet(Type type)
         {
@@ -302,7 +302,7 @@ namespace a2n.DynData
             return this.Find(tableType, pkValues);
         }
 
-        public object Create(string tableName, string jsonValue)
+        public object[] Create(string tableName, string jsonValue)
         {
             var token = JToken.Parse(jsonValue);
             return Create(tableName, token);
@@ -333,14 +333,14 @@ namespace a2n.DynData
                 return new object[] { data };
             }
         }
-        public object Create(string tableName, JObject value)
+        public object[] Create(string tableName, JObject value)
         {
             var valueType = GetTableType(tableName);
             var data = value.ToObject(valueType);
             if (Handler != null && !Handler.OnBeforeCreate(this, valueType, data))
                 return null;
             Add(data);
-            return data;
+            return new object[] { data };
         }
 
         public object[] Update(string tableName, string jsonValue)
@@ -480,7 +480,7 @@ namespace a2n.DynData
         public IQueryable<dynamic> Query(string tableName, params ExpressionRule[] rules)
         {
             if (string.IsNullOrWhiteSpace(tableName))
-                throw new ArgumentNullException(tableName);
+                throw new ArgumentNullException(nameof(tableName));
             var tableType = GetTableType(tableName);
             if (tableType == null)
                 throw new Exception($"Table {tableName} not found");

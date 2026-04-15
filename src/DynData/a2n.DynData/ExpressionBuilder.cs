@@ -4,6 +4,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -22,6 +23,8 @@ namespace a2n.DynData
         private static readonly MethodInfo MethodStringContains = typeof(String).GetMethod(nameof(String.Contains), new Type[] { typeof(String) });
         private static readonly MethodInfo MethodStringStartsWith = typeof(String).GetMethod(nameof(String.StartsWith), new Type[] { typeof(String) });
         private static readonly MethodInfo MethodStringEndsWith = typeof(String).GetMethod(nameof(String.EndsWith), new Type[] { typeof(String) });
+        private static readonly MethodInfo BuildOpenGenericMethod = typeof(ExpressionBuilder).GetMethod("Build", new Type[] { typeof(ExpressionRule[]) });
+        private static readonly ConcurrentDictionary<Type, MethodInfo> BuildGenericMethodCache = new ConcurrentDictionary<Type, MethodInfo>();
         private static Expression GenerateExpression(ExpressionRule currentRule, ParameterExpression itemExpression)
         {
             Expression result = null;
@@ -262,7 +265,7 @@ namespace a2n.DynData
         }
         public static object Build(Type type, params ExpressionRule[] rules)
         {
-            var mtd = typeof(ExpressionBuilder).GetMethod("Build", new Type[] { typeof(ExpressionRule[]) }).MakeGenericMethod(type);
+            var mtd = BuildGenericMethodCache.GetOrAdd(type, t => BuildOpenGenericMethod.MakeGenericMethod(t));
             return mtd.Invoke(null, new object[] { rules });
         }
     }

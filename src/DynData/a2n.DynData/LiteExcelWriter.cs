@@ -12,6 +12,11 @@ using System.Xml.Linq;
 
 namespace a2n.DynData
 {
+    /// <summary>
+    /// Lightweight Excel writer that generates .xlsx files without external dependencies.
+    /// This class is NOT thread-safe. Create a new instance per export operation.
+    /// Static dictionaries (dicExcelStrings, dicExcelFormater) are read-only after static initialization and are safe for concurrent reads.
+    /// </summary>
     public class LiteExcelWriter
     {
         private const int ordA = 65; // ASCII code 'A'

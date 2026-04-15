@@ -146,7 +146,10 @@ namespace System.Linq
             if (string.IsNullOrWhiteSpace(key))
                 return query;
             var elementType = query.ElementType;
-            var propertyType = elementType.GetProperty(key).PropertyType;
+            var prop = elementType.GetProperty(key);
+            if (prop == null)
+                throw new ArgumentException($"Property '{key}' not found on type '{elementType.Name}'.", nameof(key));
+            var propertyType = prop.PropertyType;
             var fun = CreateExpression(elementType, propertyType, key);
             MethodInfo mtd = null;
             if (ascending)
@@ -191,7 +194,10 @@ namespace System.Linq
             if (string.IsNullOrWhiteSpace(key))
                 return query;
             var elementType = query.ElementType;
-            var propertyType = elementType.GetProperty(key).PropertyType;
+            var prop = elementType.GetProperty(key);
+            if (prop == null)
+                throw new ArgumentException($"Property '{key}' not found on type '{elementType.Name}'.", nameof(key));
+            var propertyType = prop.PropertyType;
             var fun = CreateExpression(elementType, propertyType, key);
             MethodInfo mtd = null;
             if (ascending)

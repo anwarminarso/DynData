@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using System;
 using System.Linq.Expressions;
@@ -33,13 +32,20 @@ namespace a2n.DynData
             this.db = db;
             this.provider = provider;
         }
+
+        private IActionResult ValidateViewName(string viewName)
+        {
+            if (!DynDbContext.IsValidViewName(viewName))
+                return BadRequest("Invalid view name.");
+            return null;
+        }
+
         [Route("viewNames")]
         [HttpPost]
         [HttpGet]
-        public virtual Task<string[]> GetAllViewNames()
+        public virtual string[] GetAllViewNames()
         {
-            var result = db.GetAllTableViewNames().OrderBy(t => t).ToArray();
-            return Task.FromResult(result);
+            return db.GetAllTableViewNames().OrderBy(t => t).ToArray();
         }
 
 
@@ -81,13 +87,11 @@ namespace a2n.DynData
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
 
             valueType = db.GetTableType(viewName);
             if (valueType != null)
             {
                 qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
-                propArr = db.GetProperties(viewName);
                 metadataArr = db.GetMetadata(viewName);
             }
             if (qry != null)
@@ -140,13 +144,11 @@ namespace a2n.DynData
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
 
             valueType = db.GetTableType(viewName);
             if (valueType != null)
             {
                 qry = (db.Query(viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
-                propArr = db.GetProperties(viewName);
                 metadataArr = db.GetMetadata(viewName);
             }
             if (qry != null)
@@ -209,7 +211,7 @@ namespace a2n.DynData
                 return NotFound();
             if (data.Type == JTokenType.Array)
                 return NotFound();
-            JObject jObj = JObject.Parse(data.ToString());
+            var jObj = data as JObject;
             if (jObj == null)
                 return NotFound();
             if (jObj.Properties().Count() == 0)
@@ -221,27 +223,51 @@ namespace a2n.DynData
         [HttpPost]
         public virtual object[] CreateRecord(string viewName, JToken value)
         {
-            var dataArr = db.Create(viewName, value);
-            db.SaveChanges();
-            return dataArr;
+            try
+            {
+                var dataArr = db.Create(viewName, value);
+                db.SaveChanges();
+                return dataArr;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/update")]
         [HttpPost]
         public virtual object[] UpdateRecord(string viewName, JToken value)
         {
-            var results = db.Update(viewName, value);
-            db.SaveChanges();
-            return results;
+            try
+            {
+                var results = db.Update(viewName, value);
+                db.SaveChanges();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/delete")]
         [HttpPost]
         public virtual object[] DeleteRecord(string viewName, JToken value)
         {
-            var results = db.Delete(viewName, value);
-            db.SaveChanges();
-            return results;
+            try
+            {
+                var results = db.Delete(viewName, value);
+                db.SaveChanges();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/metadata")]
@@ -344,15 +370,22 @@ namespace a2n.DynData
             this.qryTpl = qryTpl;
             this.provider = provider;
         }
+
+        private IActionResult ValidateViewName(string viewName)
+        {
+            if (!DynDbContext.IsValidViewName(viewName))
+                return BadRequest("Invalid view name.");
+            return null;
+        }
+
         [Route("viewNames")]
         [HttpPost]
         [HttpGet]
-        public virtual Task<string[]> GetAllViewNames()
+        public virtual string[] GetAllViewNames()
         {
             var tableNames = db.GetAllTableViewNames();
             var tplNames = qryTpl.GetQueryTemplateNames();
-            var result = tableNames.Union(tplNames).OrderBy(t => t).ToArray();
-            return Task.FromResult(result);
+            return tableNames.Union(tplNames).OrderBy(t => t).ToArray();
         }
 
         [Route("{viewName}/datatable")]
@@ -401,7 +434,6 @@ namespace a2n.DynData
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
 
             if (qryTpl.HasQueryName(viewName))
             {
@@ -415,7 +447,6 @@ namespace a2n.DynData
                 if (valueType != null)
                 {
                     qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
-                    propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
             }
@@ -474,7 +505,6 @@ namespace a2n.DynData
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
 
             if (qryTpl.HasQueryName(viewName))
             {
@@ -488,7 +518,6 @@ namespace a2n.DynData
                 if (valueType != null)
                 {
                     qry = (db.Query(viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
-                    propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
             }
@@ -559,7 +588,7 @@ namespace a2n.DynData
                 return NotFound();
             if (data.Type == JTokenType.Array)
                 return NotFound();
-            JObject jObj = JObject.Parse(data.ToString());
+            var jObj = data as JObject;
             if (jObj == null)
                 return NotFound();
             if (jObj.Properties().Count() == 0)
@@ -578,27 +607,51 @@ namespace a2n.DynData
         [HttpPost]
         public virtual object[] CreateRecord(string viewName, JToken value)
         {
-            var dataArr = db.Create(viewName, value);
-            db.SaveChanges();
-            return dataArr;
+            try
+            {
+                var dataArr = db.Create(viewName, value);
+                db.SaveChanges();
+                return dataArr;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/update")]
         [HttpPost]
         public virtual object[] UpdateRecord(string viewName, JToken value)
         {
-            var results = db.Update(viewName, value);
-            db.SaveChanges();
-            return results;
+            try
+            {
+                var results = db.Update(viewName, value);
+                db.SaveChanges();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/delete")]
         [HttpPost]
         public virtual object[] DeleteRecord(string viewName, JToken value)
         {
-            var results = db.Delete(viewName, value);
-            db.SaveChanges();
-            return results;
+            try
+            {
+                var results = db.Delete(viewName, value);
+                db.SaveChanges();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/metadata")]
@@ -718,6 +771,14 @@ namespace a2n.DynData
             }
             return true;
         }
+
+        private IActionResult ValidateViewName(string viewName)
+        {
+            if (!DynDbContext.IsValidViewName(viewName))
+                return BadRequest("Invalid view name.");
+            return null;
+        }
+
         [Route("viewNames")]
         [HttpPost]
         [HttpGet]
@@ -789,7 +850,6 @@ namespace a2n.DynData
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
 
             if (qryTpl.HasQueryName(viewName))
             {
@@ -803,7 +863,6 @@ namespace a2n.DynData
                 if (valueType != null)
                 {
                     qry = (db.GetQueryable(valueType) as IQueryable<dynamic>).AsNoTrackingDynamic();
-                    propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
             }
@@ -872,7 +931,6 @@ namespace a2n.DynData
             IQueryable<dynamic> qry = null;
             Type valueType = null;
             Metadata[] metadataArr = null;
-            PropertyInfo[] propArr = null;
 
             if (qryTpl.HasQueryName(viewName))
             {
@@ -886,7 +944,6 @@ namespace a2n.DynData
                 if (valueType != null)
                 {
                     qry = (db.Query(viewName, req.rules) as IQueryable<dynamic>).AsNoTrackingDynamic();
-                    propArr = db.GetProperties(viewName);
                     metadataArr = db.GetMetadata(viewName);
                 }
             }
@@ -969,7 +1026,7 @@ namespace a2n.DynData
                 return NotFound();
             if (data.Type == JTokenType.Array)
                 return NotFound();
-            JObject jObj = JObject.Parse(data.ToString());
+            JObject jObj = data as JObject;
             if (jObj == null)
                 return NotFound();
             if (jObj.Properties().Count() == 0)
@@ -995,9 +1052,17 @@ namespace a2n.DynData
             if (!IsAllowed(DynDataAPIMethod.Create, viewName))
                 return new UnauthorizedResult();
 
-            var dataArr = db.Create(viewName, value);
-            db.SaveChanges();
-            return Ok(dataArr);
+            try
+            {
+                var dataArr = db.Create(viewName, value);
+                db.SaveChanges();
+                return Ok(dataArr);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/update")]
@@ -1010,9 +1075,17 @@ namespace a2n.DynData
             if (!IsAllowed(DynDataAPIMethod.Update, viewName))
                 return new UnauthorizedResult();
 
-            var results = db.Update(viewName, value);
-            db.SaveChanges();
-            return Ok(results);
+            try
+            {
+                var results = db.Update(viewName, value);
+                db.SaveChanges();
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/delete")]
@@ -1024,9 +1097,17 @@ namespace a2n.DynData
             if (!IsAllowed(DynDataAPIMethod.Delete, viewName))
                 return new UnauthorizedResult();
 
-            var results = db.Delete(viewName, value);
-            db.SaveChanges();
-            return Ok(results);
+            try
+            {
+                var results = db.Delete(viewName, value);
+                db.SaveChanges();
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting record in {ViewName}", viewName);
+                throw;
+            }
         }
 
         [Route("{viewName}/metadata")]

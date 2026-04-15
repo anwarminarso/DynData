@@ -44,473 +44,48 @@ namespace a2n.DynData
         }
         public ExpressionRule[] ToRules(PropertyInfo[] propArr)
         {
-            List<ExpressionRule> result = new List<ExpressionRule>();
-
             var rootRule = new ExpressionRule()
             {
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
 
-            #region External Filter
-            if (!string.IsNullOrEmpty(externalFilter))
-            {
-                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
-
-                var externalFilterRule = new ExpressionRule()
+            ExternalFilterParser.ParseExternalFilter(externalFilter,
+                name =>
                 {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
+                    var p = propArr.Where(t => t.Name == name).SingleOrDefault();
+                    return p != null ? (p.Name, p.PropertyType) : ((string, Type)?)null;
+                }, rootRule);
 
-                foreach (JProperty prop in Objval.Properties())
-                {
-                    var meta = propArr.Where(t => t.Name == prop.Name).SingleOrDefault();
-                    if (meta == null)
-                        continue;
+            ExternalFilterParser.ParseGlobalSearch(search.value, usePGSQL, EnableSearchIgnoreCase,
+                () => propArr.Select(p => (p.Name, p.PropertyType)), rootRule);
 
-                    JArray values = null;
-                    List<string> valueQry = new List<string>();
-                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
-                    bool RequireIn = false;
-                    if (prop.Value.Type == JTokenType.Array)
-                    {
-                        values = prop.Value as JArray;
-                        RequireIn = true;
-                    }
-                    else
-                    {
-                        values = new JArray();
-                        values.Add(prop.Value);
-                    }
-                    if (RequireIn)
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            if (val.StartsWith(">") || val.StartsWith("<") || val.StartsWith("="))
-                            {
-                                RequireIn = false;
-                                break;
-                            }
-                        }
-                    }
+            ExternalFilterParser.ParseQueryBuilder(jsonQB, propArr, rootRule);
 
-                    if (RequireIn)
-                    {
-                        var ruleIn = new ExpressionRule()
-                        {
-                            IsBracket = true,
-                            LogicalOperator = ExpressionLogicalOperator.And
-                        };
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString().Trim();
-                            var childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.Or,
-                                ReferenceFieldName = prop.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
-                            ruleIn.AddChild(childFilter);
-                        }
-                        childFilters.Add(ruleIn);
-                    }
-                    else
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            ExpressionRule childFilter = null;
-                            if (val.StartsWith(">"))
-                            {
-                                var opr = ExpressionOperator.GreaterThan;
-                                if (val.StartsWith(">="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("<"))
-                            {
-                                var opr = ExpressionOperator.LessThan;
-                                if (val.StartsWith("<="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("="))
-                            {
-                                val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("%"))
-                            {
-                                var opr = ExpressionOperator.EndsWith;
-                                if (val.EndsWith("%"))
-                                {
-                                    val = val.Substring(1, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.Contains;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.EndsWith("%"))
-                            {
-                                val = val.Substring(0, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.StartsWith,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else
-                            {
-                                val = val.Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            childFilters.Add(childFilter);
-                        }
-                    }
-                    foreach (var item in childFilters)
-                        externalFilterRule.AddChild(item);
-                }
-
-                if (externalFilterRule.Children.Length > 0)
-                    rootRule.AddChild(externalFilterRule);
-            }
-            #endregion
-
-            if (!string.IsNullOrEmpty(search.value))
-            {
-                var globalSearchRule = new ExpressionRule()
-                {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
-                foreach (var prop in propArr)
-                {
-                    if (prop.PropertyType == typeof(String))
-                    {
-                        var childSearch = new ExpressionRule()
-                        {
-                            IsBracket = false,
-                            LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
-                            ReferenceFieldName = prop.Name,
-                            ReferenceFieldType = prop.PropertyType,
-                            CompareFieldObject = search.value
-                        };
-                        globalSearchRule.AddChild(childSearch);
-                    }
-                }
-                rootRule.AddChild(globalSearchRule);
-            }
-
-            result.Add(rootRule);
-            if (!string.IsNullOrEmpty(jsonQB))
-            {
-                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
-                if (queryBuilder != null && queryBuilder.ruleData != null)
-                {
-                    var rules = queryBuilder.ToExpressionRule(propArr, null);
-                    foreach (var rule in rules)
-                        rootRule.AddChild(rule);
-                }
-            }
-            return result.ToArray();
+            return new[] { rootRule };
         }
         public ExpressionRule[] ToRules(Metadata[] metaArr)
         {
-            List<ExpressionRule> result = new List<ExpressionRule>();
-
             var rootRule = new ExpressionRule()
             {
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
 
-            #region External Filter
-            if (!string.IsNullOrEmpty(externalFilter))
-            {
-                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
-
-                var externalFilterRule = new ExpressionRule()
+            ExternalFilterParser.ParseExternalFilter(externalFilter,
+                name =>
                 {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
+                    var m = metaArr.Where(t => t.FieldName == name).SingleOrDefault();
+                    return m != null ? (m.FieldName, m.PropertyInfo.PropertyType) : ((string, Type)?)null;
+                }, rootRule);
 
-                foreach (JProperty prop in Objval.Properties())
-                {
-                    var meta = metaArr.Where(t => t.FieldName == prop.Name).SingleOrDefault();
-                    if (meta == null)
-                        continue;
+            ExternalFilterParser.ParseGlobalSearch(search.value, usePGSQL, EnableSearchIgnoreCase,
+                () => metaArr.Where(m => m.IsOrderable).Select(m => (m.FieldName, m.PropertyInfo.PropertyType)), rootRule);
 
-                    JArray values = null;
-                    List<string> valueQry = new List<string>();
-                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
-                    bool RequireIn = false;
-                    if (prop.Value.Type == JTokenType.Array)
-                    {
-                        values = prop.Value as JArray;
-                        RequireIn = true;
-                    }
-                    else
-                    {
-                        values = new JArray();
-                        values.Add(prop.Value);
-                    }
-                    if (RequireIn)
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            if (val.StartsWith(">") || val.StartsWith("<") || val.StartsWith("="))
-                            {
-                                RequireIn = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (RequireIn)
-                    {
-                        var ruleIn = new ExpressionRule()
-                        {
-                            IsBracket = true,
-                            LogicalOperator = ExpressionLogicalOperator.And
-                        };
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString().Trim();
-                            var childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.Or,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                            ruleIn.AddChild(childFilter);
-                        }
-                        childFilters.Add(ruleIn);
-                    }
-                    else
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            ExpressionRule childFilter = null;
-                            if (val.StartsWith(">"))
-                            {
-                                var opr = ExpressionOperator.GreaterThan;
-                                if (val.StartsWith(">="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
+            var propArr = metaArr.Select(t => t.PropertyInfo).ToArray();
+            ExternalFilterParser.ParseQueryBuilder(jsonQB, propArr, rootRule);
 
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("<"))
-                            {
-                                var opr = ExpressionOperator.LessThan;
-                                if (val.StartsWith("<="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("="))
-                            {
-                                val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("%"))
-                            {
-                                var opr = ExpressionOperator.EndsWith;
-                                if (val.EndsWith("%"))
-                                {
-                                    val = val.Substring(1, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.Contains;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.EndsWith("%"))
-                            {
-                                val = val.Substring(0, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.StartsWith,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else
-                            {
-                                val = val.Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-
-                            childFilters.Add(childFilter);
-                        }
-                    }
-                    foreach (var item in childFilters)
-                        externalFilterRule.AddChild(item);
-                }
-
-                if (externalFilterRule.Children.Length > 0)
-                    rootRule.AddChild(externalFilterRule);
-            }
-            #endregion
-            if (!string.IsNullOrEmpty(search.value))
-            {
-                var globalSearchRule = new ExpressionRule()
-                {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
-                foreach (var meta in metaArr)
-                {
-                    if (!meta.IsOrderable)
-                        continue;
-                    if (meta.PropertyInfo.PropertyType == typeof(String))
-                    {
-                        var childSearch = new ExpressionRule()
-                        {
-                            IsBracket = false,
-                            LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
-                            ReferenceFieldName = meta.FieldName,
-                            ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                            CompareFieldObject = search.value
-                        };
-                        globalSearchRule.AddChild(childSearch);
-                    }
-                }
-                rootRule.AddChild(globalSearchRule);
-            }
-
-            result.Add(rootRule);
-            if (!string.IsNullOrEmpty(jsonQB))
-            {
-                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
-                var propArr = metaArr.Select(t => t.PropertyInfo).ToArray();
-                if (queryBuilder != null && queryBuilder.ruleData != null)
-                {
-                    var rules = queryBuilder.ToExpressionRule(propArr, null);
-                    foreach (var rule in rules)
-                        rootRule.AddChild(rule);
-                }
-            }
-            return result.ToArray();
+            return new[] { rootRule };
         }
         public object ToWhereExpression(Type type)
         {
@@ -630,14 +205,15 @@ namespace a2n.DynData
             var qry = ToQueryable(query);
             if (length == -1)
             {
+                var items = qry.ToArray();
                 return new PagingResult<T>()
                 {
                     pageIndex = 0,
                     pageSize = -1,
                     context = null,
-                    items = qry.ToArray(),
+                    items = items,
                     totalPages = 1,
-                    totalRows = qry.Count()
+                    totalRows = items.Length
                 };
             }
             return qry.ToPagingResult(length, pageIndex);
@@ -655,14 +231,15 @@ namespace a2n.DynData
             var qry = ToQueryable(query, valueType, propArr);
             if (length == -1)
             {
+                var items = qry.ToArray();
                 return new PagingResult<dynamic>()
                 {
                     pageIndex = 0,
                     pageSize = -1,
                     context = null,
-                    items = qry.ToArray(),
+                    items = items,
                     totalPages = 1,
-                    totalRows = qry.Count()
+                    totalRows = items.Length
                 };
             }
             return qry.ToPagingResult(length, pageIndex);
@@ -675,14 +252,15 @@ namespace a2n.DynData
             var qry = ToQueryable(query, valueType, metaArr);
             if (length == -1)
             {
+                var items = qry.ToArray();
                 return new PagingResult<dynamic>()
                 {
                     pageIndex = 0,
                     pageSize = -1,
                     context = null,
-                    items = qry.ToArray(),
+                    items = items,
                     totalPages = 1,
-                    totalRows = qry.Count()
+                    totalRows = items.Length
                 };
             }
             return qry.ToPagingResult(length, pageIndex);
@@ -781,472 +359,49 @@ namespace a2n.DynData
         }
         public ExpressionRule[] ToRules(PropertyInfo[] propArr)
         {
-            List<ExpressionRule> result = new List<ExpressionRule>();
-
             var rootRule = new ExpressionRule()
             {
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
 
-
-            #region External Filter
-            if (!string.IsNullOrEmpty(externalFilter))
-            {
-                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
-
-                var externalFilterRule = new ExpressionRule()
+            ExternalFilterParser.ParseExternalFilter(externalFilter,
+                name =>
                 {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
-                foreach (JProperty prop in Objval.Properties())
-                {
-                    var meta = propArr.Where(t => t.Name == prop.Name).SingleOrDefault();
-                    if (meta == null)
-                        continue;
+                    var p = propArr.Where(t => t.Name == name).SingleOrDefault();
+                    return p != null ? (p.Name, p.PropertyType) : ((string, Type)?)null;
+                }, rootRule);
 
-                    JArray values = null;
-                    List<string> valueQry = new List<string>();
-                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
-                    bool RequireIn = false;
-                    if (prop.Value.Type == JTokenType.Array)
-                    {
-                        values = prop.Value as JArray;
-                        RequireIn = true;
-                    }
-                    else
-                    {
-                        values = new JArray();
-                        values.Add(prop.Value);
-                    }
-                    if (RequireIn)
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            if (val.StartsWith(">") || val.StartsWith("<") || val.StartsWith("="))
-                            {
-                                RequireIn = false;
-                                break;
-                            }
-                        }
-                    }
+            ExternalFilterParser.ParseGlobalSearch(globalSearch, usePGSQL, EnableSearchIgnoreCase,
+                () => propArr.Select(p => (p.Name, p.PropertyType)), rootRule);
 
-                    if (RequireIn)
-                    {
-                        var ruleIn = new ExpressionRule()
-                        {
-                            IsBracket = true,
-                            LogicalOperator = ExpressionLogicalOperator.And
-                        };
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString().Trim();
-                            var childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.Or,
-                                ReferenceFieldName = prop.Name,
-                                ReferenceFieldType = meta.PropertyType,
-                                CompareFieldValue = val
-                            };
-                            ruleIn.AddChild(childFilter);
-                        }
-                        childFilters.Add(ruleIn);
-                    }
-                    else
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            ExpressionRule childFilter = null;
-                            if (val.StartsWith(">"))
-                            {
-                                var opr = ExpressionOperator.GreaterThan;
-                                if (val.StartsWith(">="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
+            ExternalFilterParser.ParseQueryBuilder(jsonQB, propArr, rootRule);
 
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("<"))
-                            {
-                                var opr = ExpressionOperator.LessThan;
-                                if (val.StartsWith("<="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("="))
-                            {
-                                val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("%"))
-                            {
-                                var opr = ExpressionOperator.EndsWith;
-                                if (val.EndsWith("%"))
-                                {
-                                    val = val.Substring(1, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.Contains;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.EndsWith("%"))
-                            {
-                                val = val.Substring(0, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.StartsWith,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else
-                            {
-                                val = val.Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.Name,
-                                    ReferenceFieldType = meta.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            childFilters.Add(childFilter);
-                        }
-                    }
-                    foreach (var item in childFilters)
-                        externalFilterRule.AddChild(item);
-                }
-
-                if (externalFilterRule.Children.Length > 0)
-                    rootRule.AddChild(externalFilterRule);
-            }
-            #endregion
-            if (!string.IsNullOrEmpty(globalSearch))
-            {
-                var globalSearchRule = new ExpressionRule()
-                {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
-                foreach (var prop in propArr)
-                {
-                    if (prop.PropertyType == typeof(String))
-                    {
-                        var childSearch = new ExpressionRule()
-                        {
-                            IsBracket = false,
-                            LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
-                            ReferenceFieldName = prop.Name,
-                            ReferenceFieldType = prop.PropertyType,
-                            CompareFieldObject = globalSearch
-                        };
-                        globalSearchRule.AddChild(childSearch);
-                    }
-                }
-                rootRule.AddChild(globalSearchRule);
-            }
-
-            result.Add(rootRule);
-            if (!string.IsNullOrEmpty(jsonQB))
-            {
-                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
-                if (queryBuilder != null && queryBuilder.ruleData != null)
-                {
-                    var rules = queryBuilder.ToExpressionRule(propArr, null);
-                    foreach (var rule in rules)
-                        rootRule.AddChild(rule);
-                }
-            }
-            return result.ToArray();
+            return new[] { rootRule };
         }
 
         public ExpressionRule[] ToRules(Metadata[] metaArr)
         {
-            List<ExpressionRule> result = new List<ExpressionRule>();
-
             var rootRule = new ExpressionRule()
             {
                 IsBracket = true,
                 LogicalOperator = ExpressionLogicalOperator.And
             };
-            #region External Filter
-            if (!string.IsNullOrEmpty(externalFilter))
-            {
-                JObject Objval = JsonConvert.DeserializeObject(externalFilter) as JObject;
 
-                var externalFilterRule = new ExpressionRule()
+            ExternalFilterParser.ParseExternalFilter(externalFilter,
+                name =>
                 {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
+                    var m = metaArr.Where(t => t.FieldName == name).SingleOrDefault();
+                    return m != null ? (m.FieldName, m.PropertyInfo.PropertyType) : ((string, Type)?)null;
+                }, rootRule);
 
-                foreach (JProperty prop in Objval.Properties())
-                {
-                    var meta = metaArr.Where(t => t.FieldName == prop.Name).SingleOrDefault();
-                    if (meta == null)
-                        continue;
+            ExternalFilterParser.ParseGlobalSearch(globalSearch, usePGSQL, EnableSearchIgnoreCase,
+                () => metaArr.Where(m => m.IsOrderable && m.IsSearchable).Select(m => (m.FieldName, m.PropertyInfo.PropertyType)), rootRule);
 
-                    JArray values = null;
-                    List<string> valueQry = new List<string>();
-                    List<ExpressionRule> childFilters = new List<ExpressionRule>();
-                    bool RequireIn = false;
-                    if (prop.Value.Type == JTokenType.Array)
-                    {
-                        values = prop.Value as JArray;
-                        RequireIn = true;
-                    }
-                    else
-                    {
-                        values = new JArray();
-                        values.Add(prop.Value);
-                    }
-                    if (RequireIn)
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            if (val.StartsWith(">") || val.StartsWith("<") || val.StartsWith("="))
-                            {
-                                RequireIn = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (RequireIn)
-                    {
-                        var ruleIn = new ExpressionRule()
-                        {
-                            IsBracket = true,
-                            LogicalOperator = ExpressionLogicalOperator.And
-                        };
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString().Trim();
-                            var childFilter = new ExpressionRule()
-                            {
-                                IsBracket = false,
-                                Operator = ExpressionOperator.Equal,
-                                LogicalOperator = ExpressionLogicalOperator.Or,
-                                ReferenceFieldName = meta.FieldName,
-                                ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                CompareFieldValue = val
-                            };
-                            ruleIn.AddChild(childFilter);
-                        }
-                        childFilters.Add(ruleIn);
-                    }
-                    else
-                    {
-                        foreach (JValue value in values)
-                        {
-                            var val = value.Value.ToString();
-                            ExpressionRule childFilter = null;
-                            if (val.StartsWith(">"))
-                            {
-                                var opr = ExpressionOperator.GreaterThan;
-                                if (val.StartsWith(">="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.GreaterThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
+            var propArr = metaArr.Select(t => t.PropertyInfo).ToArray();
+            ExternalFilterParser.ParseQueryBuilder(jsonQB, propArr, rootRule);
 
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("<"))
-                            {
-                                var opr = ExpressionOperator.LessThan;
-                                if (val.StartsWith("<="))
-                                {
-                                    val = val.Substring(2, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.LessThanOrEqual;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("="))
-                            {
-                                val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.StartsWith("%"))
-                            {
-                                var opr = ExpressionOperator.EndsWith;
-                                if (val.EndsWith("%"))
-                                {
-                                    val = val.Substring(1, val.Length - 2).Trim();
-                                    opr = ExpressionOperator.Contains;
-                                }
-                                else
-                                    val = val.Substring(1, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = opr,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else if (val.EndsWith("%"))
-                            {
-                                val = val.Substring(0, val.Length - 1).Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.StartsWith,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            else
-                            {
-                                val = val.Trim();
-                                childFilter = new ExpressionRule()
-                                {
-                                    IsBracket = false,
-                                    Operator = ExpressionOperator.Equal,
-                                    LogicalOperator = ExpressionLogicalOperator.And,
-                                    ReferenceFieldName = meta.FieldName,
-                                    ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                                    CompareFieldValue = val
-                                };
-                            }
-                            childFilters.Add(childFilter);
-                        }
-                    }
-                    foreach (var item in childFilters)
-                        externalFilterRule.AddChild(item);
-                }
-
-                if (externalFilterRule.Children.Length > 0)
-                    rootRule.AddChild(externalFilterRule);
-            }
-            #endregion
-            if (!string.IsNullOrEmpty(globalSearch))
-            {
-                var globalSearchRule = new ExpressionRule()
-                {
-                    IsBracket = true,
-                    LogicalOperator = ExpressionLogicalOperator.And
-                };
-                foreach (var meta in metaArr)
-                {
-                    if (!meta.IsOrderable || !meta.IsSearchable)
-                        continue;
-                    if (meta.PropertyInfo.PropertyType == typeof(String))
-                    {
-                        var childSearch = new ExpressionRule()
-                        {
-                            IsBracket = false,
-                            LogicalOperator = ExpressionLogicalOperator.Or,
-                            Operator = usePGSQL ? ExpressionOperator.PGSQLContains : EnableSearchIgnoreCase ? ExpressionOperator.ContainsIgnoreCase : ExpressionOperator.Contains,
-                            ReferenceFieldName = meta.FieldName,
-                            ReferenceFieldType = meta.PropertyInfo.PropertyType,
-                            CompareFieldObject = globalSearch
-                        };
-                        globalSearchRule.AddChild(childSearch);
-                    }
-                }
-                rootRule.AddChild(globalSearchRule);
-            }
-
-            result.Add(rootRule);
-            if (!string.IsNullOrEmpty(jsonQB))
-            {
-                var queryBuilder = JsonConvert.DeserializeObject<jQueryBuilderModel>(jsonQB);
-                var propArr = metaArr.Select(t => t.PropertyInfo).ToArray();
-                if (queryBuilder != null && queryBuilder.ruleData != null)
-                {
-                    var rules = queryBuilder.ToExpressionRule(propArr, null);
-                    foreach (var rule in rules)
-                        rootRule.AddChild(rule);
-                }
-            }
-            return result.ToArray();
+            return new[] { rootRule };
         }
         public object ToWhereExpression(Type type)
         {
